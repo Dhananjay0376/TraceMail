@@ -1,104 +1,234 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import { Shield, Radio, Terminal, AlertTriangle, Layers } from 'lucide-react';
-
-import UploadPanel from './components/UploadPanel';
-import FraudScoreCard from './components/FraudScoreCard';
-import HeaderTrace from './components/HeaderTrace';
-import GeoMap from './components/GeoMap';
-import CaseList from './components/CaseList';
-
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+import Navbar from './components/navigation/Navbar';
+import Sidebar from './components/navigation/Sidebar';
+import LandingScreen from './components/screens/LandingScreen';
+import AuthModal from './components/screens/AuthModal';
+import OnboardingScreen from './components/screens/OnboardingScreen';
+import DashboardScreen from './components/screens/DashboardScreen';
+import SubmitEmailScreen from './components/screens/SubmitEmailScreen';
+import LoadingScreen from './components/screens/LoadingScreen';
+import AnalysisResultScreen from './components/screens/AnalysisResultScreen';
+import CaseManagementScreen from './components/screens/CaseManagementScreen';
+import AlertsCenterScreen from './components/screens/AlertsCenterScreen';
+import SearchHistoryScreen from './components/screens/SearchHistoryScreen';
+import ForensicReportScreen from './components/screens/ForensicReportScreen';
+import SettingsScreen from './components/screens/SettingsScreen';
+import AdminPanelScreen from './components/screens/AdminPanelScreen';
+import DocumentationScreen from './components/screens/DocumentationScreen';
+import LogoutModal from './components/screens/LogoutModal';
+import AmbientAura from './components/vfx/AmbientAura';
+import { MOCK_SAMPLES } from './mock/mockData';
 
 export default function App() {
-  const [analysisData, setAnalysisData] = useState(null);
-  const [caseHistory, setCaseHistory] = useState([]);
-  const [serverStatus, setServerStatus] = useState('checking');
+  const [currentScreen, setCurrentScreen] = useState('landing');
+  const [currentRole, setCurrentRole] = useState('analyst'); // 'analyst' | 'employee' | 'admin'
+  const [selectedSample, setSelectedSample] = useState(MOCK_SAMPLES[0]);
+  const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [isLogoutOpen, setIsLogoutOpen] = useState(false);
+  const [unreadAlerts, setUnreadAlerts] = useState(3);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isSidebarPinned, setIsSidebarPinned] = useState(false);
 
+  // Close sidebar on Escape key if open and not pinned
   useEffect(() => {
-    // Check backend health
-    axios.get(`${API_BASE}/health`)
-      .then(() => setServerStatus('connected'))
-      .catch(() => setServerStatus('disconnected'));
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && isSidebarOpen && !isSidebarPinned) {
+        setIsSidebarOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isSidebarOpen, isSidebarPinned]);
 
-    // Fetch case history
-    axios.get(`${API_BASE}/cases`)
-      .then(res => setCaseHistory(res.data))
-      .catch(() => {});
-  }, []);
+  // Navigate when an option of the main menu is clicked
+  // "only open the whole tab while get clicked on option of main menu"
+  const handleNavigate = (screenId) => {
+    setCurrentScreen(screenId);
+    if (!isSidebarPinned) {
+      setIsSidebarOpen(false); // Close sidebar drawer so the whole tab opens full-screen
+    }
+  };
 
-  const handleAnalysisComplete = (data) => {
-    setAnalysisData(data);
-    setCaseHistory(prev => [data, ...prev.filter(c => c.id !== data.id)]);
+  // Switch sample email and run simulated scan
+  const handleSelectSampleAndAnalyze = (sampleId) => {
+    const found = MOCK_SAMPLES.find((s) => s.id === sampleId) || MOCK_SAMPLES[0];
+    setSelectedSample(found);
+    setCurrentScreen('loading');
+    if (!isSidebarPinned) setIsSidebarOpen(false);
+  };
+
+  // Direct inspect without loading
+  const handleDirectInspect = (sampleId) => {
+    const found = MOCK_SAMPLES.find((s) => s.id === sampleId) || MOCK_SAMPLES[0];
+    setSelectedSample(found);
+    setCurrentScreen('result');
+    if (!isSidebarPinned) setIsSidebarOpen(false);
+  };
+
+  // Upload or raw text analysis submission
+  const handleAnalyzeSubmission = ({ sampleId }) => {
+    // TODO: connect to backend API /api/analyze with real FormData
+    const found = MOCK_SAMPLES.find((s) => s.id === sampleId) || MOCK_SAMPLES[0];
+    setSelectedSample(found);
+    setCurrentScreen('loading');
+    if (!isSidebarPinned) setIsSidebarOpen(false);
+  };
+
+  // Action dispatch from Analysis Result
+  const handleResultAction = (action) => {
+    if (action === 'create_case') {
+      setCurrentScreen('cases');
+    } else if (action === 'export_pdf') {
+      setCurrentScreen('report');
+    }
+  };
+
+  // Auth success callback
+  const handleAuthSuccess = (user) => {
+    if (user.role) setCurrentRole(user.role);
+    setCurrentScreen('dashboard');
   };
 
   return (
-    <div>
-      {/* Top Navbar */}
-      <header style={{
-        background: '#0f172a',
-        borderBottom: '1px solid #1e293b',
-        padding: '16px 24px',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div style={{
-            background: 'linear-gradient(135deg, #2563eb, #7c3aed)',
-            padding: 8,
-            borderRadius: 8,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}>
-            <Shield size={24} color="#ffffff" />
-          </div>
-          <div>
-            <h1 style={{ fontSize: '1.25rem', fontWeight: 800, letterSpacing: -0.5 }}>
-              TraceMail <span style={{ color: '#38bdf8', fontSize: '0.85rem', fontWeight: 600 }}>Forensic Intelligence</span>
-            </h1>
-            <p style={{ fontSize: '0.75rem', color: '#64748b' }}>
-              SIH 2026 PS26106 — Threat Detection, Relay Geolocation & Attribution
-            </p>
-          </div>
-        </div>
+    <div className="min-h-screen bg-[#050814] text-slate-100 flex flex-col font-sans relative overflow-x-hidden">
+      {/* Redrob Ambient Lighting Aura & Tech Grid */}
+      <AmbientAura />
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.8rem' }}>
-            <Radio size={14} color={serverStatus === 'connected' ? '#10b981' : '#ef4444'} />
-            <span style={{ color: serverStatus === 'connected' ? '#34d399' : '#f87171' }}>
-              {serverStatus === 'connected' ? 'API Online' : 'API Offline (Local Stub)'}
-            </span>
-          </div>
-          <span className="badge badge-blue">SIH 2026 Prototype</span>
-        </div>
-      </header>
+      {/* Top Persistent Navigation Bar with Main Menu Button & Status */}
+      <Navbar
+        currentScreen={currentScreen}
+        onNavigate={handleNavigate}
+        currentRole={currentRole}
+        onRoleChange={setCurrentRole}
+        unreadAlertsCount={unreadAlerts}
+        onOpenSubmit={() => handleNavigate('submit')}
+        onOpenLogout={() => setIsLogoutOpen(true)}
+        isSidebarOpen={isSidebarOpen}
+        onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
+      />
 
-      {/* Main Container */}
-      <main className="container">
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: 20, marginBottom: 20 }}>
-          <UploadPanel onAnalysisComplete={handleAnalysisComplete} />
-          <CaseList
-            cases={caseHistory}
-            onSelectCase={(c) => setAnalysisData(c)}
-            activeCaseId={analysisData?.id}
-          />
-        </div>
+      <div className="flex-1 flex relative z-10">
+        {/* Left-Hand Side Navigation Sidebar (Shifted clickable options) */}
+        <Sidebar
+          isOpen={isSidebarOpen}
+          onClose={() => setIsSidebarOpen(false)}
+          isPinned={isSidebarPinned}
+          onTogglePin={() => setIsSidebarPinned(!isSidebarPinned)}
+          currentScreen={currentScreen}
+          onNavigate={handleNavigate}
+          currentRole={currentRole}
+          onRoleChange={setCurrentRole}
+          unreadAlertsCount={unreadAlerts}
+          onOpenSubmit={() => handleNavigate('submit')}
+          onOpenLogout={() => setIsLogoutOpen(true)}
+        />
 
-        {analysisData && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-            {/* Top Row: Score + Header Forensics */}
-            <div className="grid-2">
-              <FraudScoreCard data={analysisData} />
-              <HeaderTrace data={analysisData} />
-            </div>
+        {/* Main Dynamic View Area: renders the selected whole tab */}
+        <main
+          className={`flex-1 min-w-0 transition-all duration-300 ${
+            isSidebarPinned && isSidebarOpen ? 'lg:pl-72' : ''
+          }`}
+        >
+          {/* 1. Landing Page */}
+          {currentScreen === 'landing' && (
+            <LandingScreen
+              onStartAnalysis={() => handleNavigate('submit')}
+              onOpenAuth={() => setIsAuthOpen(true)}
+              onOpenDashboard={() => handleNavigate('dashboard')}
+            />
+          )}
 
-            {/* Bottom Row: Geolocation Map */}
-            <GeoMap trace={analysisData.trace} />
-          </div>
-        )}
-      </main>
+          {/* 3. Onboarding Screen */}
+          {currentScreen === 'onboarding' && (
+            <OnboardingScreen
+              onCompleteOnboarding={() => handleNavigate('dashboard')}
+              onSkip={() => handleNavigate('dashboard')}
+            />
+          )}
+
+          {/* 4. Dashboard (Role-Aware: Employee vs Analyst) */}
+          {currentScreen === 'dashboard' && (
+            <DashboardScreen
+              currentRole={currentRole}
+              onOpenSubmit={() => handleNavigate('submit')}
+              onSelectSample={handleDirectInspect}
+              onNavigate={handleNavigate}
+            />
+          )}
+
+          {/* 5. Submit Email Screen */}
+          {currentScreen === 'submit' && (
+            <SubmitEmailScreen
+              onAnalyze={handleAnalyzeSubmission}
+              onSelectSample={handleSelectSampleAndAnalyze}
+            />
+          )}
+
+          {/* 6. Loading / Analysis In-Progress Screen */}
+          {currentScreen === 'loading' && (
+            <LoadingScreen onComplete={() => setCurrentScreen('result')} />
+          )}
+
+          {/* 7. Analysis Result Page */}
+          {currentScreen === 'result' && (
+            <AnalysisResultScreen
+              sample={selectedSample}
+              currentRole={currentRole}
+              onActionTrigger={handleResultAction}
+              onOpenCase={() => handleNavigate('cases')}
+            />
+          )}
+
+          {/* 8. Case Management Screen */}
+          {currentScreen === 'cases' && (
+            <CaseManagementScreen onSelectCaseForInspect={handleDirectInspect} />
+          )}
+
+          {/* 9. Alerts Center */}
+          {currentScreen === 'alerts' && (
+            <AlertsCenterScreen
+              onSelectSample={(sampleId) => {
+                handleDirectInspect(sampleId);
+                setUnreadAlerts(Math.max(0, unreadAlerts - 1));
+              }}
+            />
+          )}
+
+          {/* 10. Search & Archive */}
+          {currentScreen === 'search' && (
+            <SearchHistoryScreen onSelectSample={handleDirectInspect} />
+          )}
+
+          {/* 11. Forensic Report Screen (PDF preview) */}
+          {currentScreen === 'report' && <ForensicReportScreen sample={selectedSample} />}
+
+          {/* 12. Settings Screen */}
+          {currentScreen === 'settings' && <SettingsScreen currentRole={currentRole} />}
+
+          {/* 13. Admin Panel (Admin-Only) */}
+          {currentScreen === 'admin' && <AdminPanelScreen />}
+
+          {/* 14. Documentation & FAQ */}
+          {currentScreen === 'docs' && <DocumentationScreen />}
+        </main>
+      </div>
+
+      {/* 2. Authentication Modal */}
+      <AuthModal
+        isOpen={isAuthOpen}
+        onClose={() => setIsAuthOpen(false)}
+        onAuthSuccess={handleAuthSuccess}
+      />
+
+      {/* 15. Logout Confirmation Modal */}
+      <LogoutModal
+        isOpen={isLogoutOpen}
+        onClose={() => setIsLogoutOpen(false)}
+        onConfirmLogout={() => {
+          setCurrentRole('employee');
+          handleNavigate('landing');
+        }}
+      />
     </div>
   );
 }

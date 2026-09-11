@@ -1,60 +1,135 @@
-﻿@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
+:root {
+  color-scheme: dark;
 }
 
 body {
-  font-family: 'Inter', sans-serif;
-  background-color: #0b0f19;
-  color: #e2e8f0;
-  min-height: 100vh;
+  margin: 0;
+  background-color: #050814;
+  color: #f8fafc;
+  overflow-x: hidden;
+  font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
 }
 
-code, pre {
-  font-family: 'JetBrains Mono', monospace;
+/* Redrob Custom Subtle Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
 }
-
-.container {
-  max-width: 1380px;
-  margin: 0 auto;
-  padding: 24px 16px;
+::-webkit-scrollbar-track {
+  background: #090d1f;
 }
-
-.card {
-  background: #131b2e;
-  border: 1px solid #222f4c;
-  border-radius: 12px;
-  padding: 20px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-}
-
-.badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 4px 10px;
+::-webkit-scrollbar-thumb {
+  background: #192348;
   border-radius: 9999px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #2b52ff;
 }
 
-.badge-green { background: #064e3b; color: #34d399; border: 1px solid #059669; }
-.badge-amber { background: #78350f; color: #fbbf24; border: 1px solid #d97706; }
-.badge-red { background: #7f1d1d; color: #f87171; border: 1px solid #dc2626; }
-.badge-blue { background: #1e3a8a; color: #60a5fa; border: 1px solid #2563eb; }
-
-.grid-2 {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
+/* Redrob Subtle Tech Grid Background */
+.bg-redrob-grid {
+  background-image: radial-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1px);
+  background-size: 28px 28px;
 }
 
-@media (max-width: 900px) {
-  .grid-2 {
-    grid-template-columns: 1fr;
-  }
+/* Gradient Mask for Smooth Marquee Fade Edges */
+.marquee-mask {
+  mask-image: linear-gradient(to right, transparent 0%, black 12%, black 88%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, black 12%, black 88%, transparent 100%);
 }
+
+/* Redrob Card Light Border Sweep / Shimmer */
+.shimmer-card {
+  position: relative;
+  overflow: hidden;
+}
+.shimmer-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.05) 50%,
+    transparent 100%
+  );
+  transform: skewX(-20deg);
+  transition: 0.8s;
+  pointer-events: none;
+}
+.shimmer-card:hover::before {
+  left: 100%;
+}
+
+/* Spring Physics Micro-Interactions */
+.spring-hover {
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.spring-hover:hover {
+  transform: translateY(-2px) scale(1.01);
+}
+
+/* Redrob Glow Accents */
+.glow-redrob-blue {
+  box-shadow: 0 0 35px -5px rgba(43, 82, 255, 0.45);
+}
+.glow-redrob-violet {
+  box-shadow: 0 0 35px -5px rgba(124, 36, 255, 0.45);
+}
+.glow-redrob-aqua {
+  box-shadow: 0 0 30px -5px rgba(0, 227, 216, 0.4);
+}
+.glow-redrob-coral {
+  box-shadow: 0 0 30px -5px rgba(255, 64, 80, 0.45);
+}
+
+/* Leaflet Dark Map Adjustments with Redrob Theme */
+.leaflet-container {
+  background-color: #090d1f !important;
+  font-family: inherit;
+  z-index: 10;
+}
+
+.leaflet-popup-content-wrapper {
+  background: #0b1026 !important;
+  color: #f8fafc !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.8) !important;
+}
+
+.leaflet-popup-tip {
+  background: #0b1026 !important;
+}
+
+.font-serif-italic {
+  font-family: 'IBM Plex Serif', serif;
+  font-style: italic;
+}
+
+.font-mono {
+  font-family: 'Space Mono', 'JetBrains Mono', monospace;
+}
+
+/* Hero Carousel Progress Bar */
+@keyframes progress {
+  from { width: 0%; }
+  to   { width: 100%; }
+}
+
+/* Fade-in utility */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in {
+  animation: fadeIn 0.25s ease-out forwards;
+}
+
