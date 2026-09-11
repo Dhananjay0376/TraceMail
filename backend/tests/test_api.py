@@ -96,3 +96,20 @@ def test_get_cases_and_by_id():
     assert single_resp.status_code == 200
     assert single_resp.json()["id"] == first_id
 
+def test_auth_status_endpoint():
+    resp = client.get("/api/auth/status")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert "connected_count" in data
+    assert isinstance(data["mailboxes"], list)
+
+def test_google_login_redirect():
+    resp = client.get("/api/auth/google/login", follow_redirects=False)
+    assert resp.status_code in [302, 307]
+    assert "accounts.google.com" in resp.headers["location"]
+    assert "client_id=" in resp.headers["location"]
+
+def test_disconnect_mailbox():
+    resp = client.delete("/api/auth/disconnect/test@example.com")
+    assert resp.status_code == 200
+    assert resp.json()["status"] == "success"

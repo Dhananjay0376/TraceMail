@@ -1,5 +1,6 @@
 import os
 import uuid
+import asyncio
 from datetime import datetime, timezone
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException
@@ -16,19 +17,27 @@ from app.forensics import parse_eml_bytes, extract_hops, check_authentication_re
 from app.geointel import geolocate_ip, domain_intel
 from app.correlation import compute_fraud_score, record_and_correlate, get_campaign_graph_data, rehydrate_graph_from_db
 from app.database import init_db, save_case, get_all_cases, get_case_by_id, get_all_campaigns
+from app.auth import router as auth_router
+from app.mailbox_worker import router as mailbox_router, background_mailbox_sync_loop
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Initializes SQLite schema and rehydrates the in-memory correlation graph on startup."""
+    """Initializes SQLite schema, rehydrates graph, and starts real-time mailbox background worker."""
     init_db()
     existing_cases = get_all_cases(limit=100)
     rehydrate_graph_from_db(existing_cases)
-    yield
+    
+    # Launch automated background mailbox watcher loop
+    sync_task = asyncio.create_task(background_mailbox_sync_loop(poll_interval_seconds=15))
+    try:
+        yield
+    finally:
+        sync_task.cancel()
 
 app = FastAPI(
     title="TraceMail Forensics & Intelligence API",
     description="AI-Powered Email Threat Detection, Geolocation & Forensic Intelligence Platform (SIH 2026 - PS26106)",
-    version="1.2.0",
+    version="1.3.0",
     lifespan=lifespan
 )
 
@@ -41,13 +50,17 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Register Sub-Routers
+app.include_router(auth_router)
+app.include_router(mailbox_router)
+
 @app.get("/health")
 def health_check():
     return {
         "status": "healthy",
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "service": "TraceMail Backend Engine",
-        "version": "1.2.0"
+        "version": "1.3.0"
     }
 
 @app.post("/classify", response_model=DetectionResult)
@@ -209,5 +222,3 @@ def campaign_graph_endpoint():
 def list_campaigns():
     """Returns all multi-target campaigns discovered across cases."""
     return get_all_campaigns()
-
-

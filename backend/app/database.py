@@ -16,7 +16,7 @@ def get_connection():
     return conn
 
 def init_db():
-    """Initializes the SQLite schema for cases, campaigns, and evidence audit logs."""
+    """Initializes the SQLite schema for cases, campaigns, and monitored mailboxes."""
     conn = get_connection()
     cursor = conn.cursor()
     cursor.executescript("""
@@ -44,6 +44,14 @@ def init_db():
         first_seen TEXT,
         last_seen TEXT,
         case_count INTEGER DEFAULT 1
+    );
+
+    CREATE TABLE IF NOT EXISTS monitored_mailboxes (
+        email TEXT PRIMARY KEY,
+        token_json TEXT NOT NULL,
+        status TEXT DEFAULT 'active',
+        connected_at TEXT NOT NULL,
+        last_synced_at TEXT
     );
 
     CREATE INDEX IF NOT EXISTS idx_cases_domain ON cases(sender_domain);
@@ -163,6 +171,48 @@ def get_all_campaigns() -> List[Dict[str, Any]]:
 
     return [dict(r) for r in rows]
 
+# Monitored Mailboxes helper functions
+def save_monitored_mailbox(email: str, token_json: str):
+    """Saves or updates a connected mailbox OAuth token in SQLite."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    now = datetime.now(timezone.utc).isoformat()
+    cursor.execute("""
+    INSERT INTO monitored_mailboxes (email, token_json, status, connected_at, last_synced_at)
+    VALUES (?, ?, 'active', ?, ?)
+    ON CONFLICT(email) DO UPDATE SET
+        token_json=excluded.token_json,
+        status='active',
+        last_synced_at=excluded.last_synced_at
+    """, (email, token_json, now, now))
+    conn.commit()
+    conn.close()
+
+def update_mailbox_last_synced(email: str):
+    """Updates the last_synced_at timestamp for a mailbox."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    now = datetime.now(timezone.utc).isoformat()
+    cursor.execute("UPDATE monitored_mailboxes SET last_synced_at = ? WHERE email = ?", (now, email))
+    conn.commit()
+    conn.close()
+
+def get_all_monitored_mailboxes() -> List[Dict[str, Any]]:
+    """Returns all monitored mailboxes."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT email, token_json, status, connected_at, last_synced_at FROM monitored_mailboxes WHERE status = 'active'")
+    rows = cursor.fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+def delete_monitored_mailbox(email: str):
+    """Removes or deactivates a monitored mailbox."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM monitored_mailboxes WHERE email = ?", (email,))
+    conn.commit()
+    conn.close()
+
 # Auto-initialize database on import
 init_db()
-
