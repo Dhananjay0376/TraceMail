@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import axios from 'axios';
 import { UploadCloud, FileText, Send, AlertCircle, Loader2 } from 'lucide-react';
 
@@ -49,7 +49,7 @@ export default function UploadPanel({ onAnalysisComplete }) {
     }
 
     try {
-      const resp = await axios.post(${API_BASE}/analyze, formData, {
+      const resp = await axios.post(`${API_BASE}/analyze`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       onAnalysisComplete(resp.data);
@@ -62,12 +62,12 @@ export default function UploadPanel({ onAnalysisComplete }) {
   };
 
   return (
-    <div className=\"card\">
+    <div className="card">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
         <h2 style={{ fontSize: '1.25rem', fontWeight: 700 }}>Ingest & Analyze Email</h2>
         <div style={{ display: 'flex', gap: 8 }}>
           <button
-            type=\"button\"
+            type="button"
             onClick={() => setMode('file')}
             style={{
               padding: '6px 14px',
@@ -82,7 +82,7 @@ export default function UploadPanel({ onAnalysisComplete }) {
             Upload .EML
           </button>
           <button
-            type=\"button\"
+            type="button"
             onClick={() => setMode('text')}
             style={{
               padding: '6px 14px',
@@ -114,7 +114,7 @@ export default function UploadPanel({ onAnalysisComplete }) {
             }}
             onClick={() => document.getElementById('eml-input').click()}
           >
-            <UploadCloud size={40} color=\"#60a5fa\" style={{ margin: '0 auto 12px auto' }} />
+            <UploadCloud size={40} color="#60a5fa" style={{ margin: '0 auto 12px auto' }} />
             <p style={{ fontWeight: 600, color: '#f1f5f9' }}>
               {file ? file.name : 'Drag & drop an .eml email file here, or click to browse'}
             </p>
@@ -122,9 +122,9 @@ export default function UploadPanel({ onAnalysisComplete }) {
               Supports RFC-822 / MIME format raw email files with complete headers
             </p>
             <input
-              id=\"eml-input\"
-              type=\"file\"
-              accept=\".eml,.txt\"
+              id="eml-input"
+              type="file"
+              accept=".eml,.txt"
               style={{ display: 'none' }}
               onChange={handleFileChange}
             />
@@ -133,7 +133,7 @@ export default function UploadPanel({ onAnalysisComplete }) {
           <div>
             <textarea
               rows={7}
-              placeholder=\"Paste raw email content including headers (From, Return-Path, Received:, etc.)...\"
+              placeholder="Paste raw email content including headers (From, Return-Path, Received:, etc.)..."
               value={rawText}
               onChange={(e) => setRawText(e.target.value)}
               style={{
@@ -157,7 +157,7 @@ export default function UploadPanel({ onAnalysisComplete }) {
         )}
 
         <button
-          type=\"submit\"
+          type="submit"
           disabled={loading}
           style={{
             marginTop: 16,
@@ -178,7 +178,7 @@ export default function UploadPanel({ onAnalysisComplete }) {
         >
           {loading ? (
             <>
-              <Loader2 className=\"animate-spin\" size={20} />
+              <Loader2 className="animate-spin" size={20} />
               Forensic Inspection in Progress...
             </>
           ) : (

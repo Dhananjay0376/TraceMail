@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { ShieldAlert, ShieldCheck, AlertTriangle, Info, Network } from 'lucide-react';
 
 export default function FraudScoreCard({ data }) {
@@ -14,8 +14,10 @@ export default function FraudScoreCard({ data }) {
     return '#10b981';
   };
 
+  const badgeClass = score >= 60 ? 'badge badge-red' : score >= 30 ? 'badge badge-amber' : 'badge badge-green';
+
   return (
-    <div className=\"card\" style={{ height: '100%' }}>
+    <div className="card" style={{ height: '100%' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <div>
           <span style={{ fontSize: '0.8rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: 1 }}>
@@ -25,7 +27,7 @@ export default function FraudScoreCard({ data }) {
             Case ID: {data.id}
           </h2>
         </div>
-        <span className={adge }>
+        <span className={badgeClass}>
           {risk} Risk ({score}/100)
         </span>
       </div>
@@ -35,7 +37,7 @@ export default function FraudScoreCard({ data }) {
           width: 90,
           height: 90,
           borderRadius: '50%',
-          border: 6px solid ,
+          border: `6px solid ${getScoreColor()}`,
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
@@ -48,7 +50,7 @@ export default function FraudScoreCard({ data }) {
 
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            {score >= 60 ? <ShieldAlert color=\"#ef4444\" size={22} /> : <ShieldCheck color=\"#10b981\" size={22} />}
+            {score >= 60 ? <ShieldAlert color="#ef4444" size={22} /> : <ShieldCheck color="#10b981" size={22} />}
             <span style={{ fontSize: '1.1rem', fontWeight: 700 }}>
               AI Prediction: <span style={{ color: score >= 60 ? '#f87171' : '#34d399' }}>{detection?.label}</span>
             </span>
@@ -71,7 +73,7 @@ export default function FraudScoreCard({ data }) {
           alignItems: 'center',
           gap: 10
         }}>
-          <Network color=\"#c084fc\" size={24} />
+          <Network color="#c084fc" size={24} />
           <div>
             <span style={{ fontWeight: 700, color: '#f3e8ff', fontSize: '0.9rem' }}>
               Multi-Case Campaign Detected: {campaign.campaign_id}

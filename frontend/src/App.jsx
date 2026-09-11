@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Shield, Radio, Terminal, AlertTriangle, Layers } from 'lucide-react';
 
@@ -17,12 +17,12 @@ export default function App() {
 
   useEffect(() => {
     // Check backend health
-    axios.get(${API_BASE}/health)
+    axios.get(`${API_BASE}/health`)
       .then(() => setServerStatus('connected'))
       .catch(() => setServerStatus('disconnected'));
 
     // Fetch case history
-    axios.get(${API_BASE}/cases)
+    axios.get(`${API_BASE}/cases`)
       .then(res => setCaseHistory(res.data))
       .catch(() => {});
   }, []);
@@ -52,7 +52,7 @@ export default function App() {
             alignItems: 'center',
             justifyContent: 'center'
           }}>
-            <Shield size={24} color=\"#ffffff\" />
+            <Shield size={24} color="#ffffff" />
           </div>
           <div>
             <h1 style={{ fontSize: '1.25rem', fontWeight: 800, letterSpacing: -0.5 }}>
@@ -71,12 +71,12 @@ export default function App() {
               {serverStatus === 'connected' ? 'API Online' : 'API Offline (Local Stub)'}
             </span>
           </div>
-          <span className=\"badge badge-blue\">SIH 2026 Prototype</span>
+          <span className="badge badge-blue">SIH 2026 Prototype</span>
         </div>
       </header>
 
       {/* Main Container */}
-      <main className=\"container\">
+      <main className="container">
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: 20, marginBottom: 20 }}>
           <UploadPanel onAnalysisComplete={handleAnalysisComplete} />
           <CaseList
@@ -89,7 +89,7 @@ export default function App() {
         {analysisData && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
             {/* Top Row: Score + Header Forensics */}
-            <div className=\"grid-2\">
+            <div className="grid-2">
               <FraudScoreCard data={analysisData} />
               <HeaderTrace data={analysisData} />
             </div>

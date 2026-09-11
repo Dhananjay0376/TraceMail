@@ -1,10 +1,10 @@
-﻿import React from 'react';
+import React from 'react';
 import { History, ShieldAlert, ShieldCheck } from 'lucide-react';
 
 export default function CaseList({ cases, onSelectCase, activeCaseId }) {
   if (!cases || cases.length === 0) {
     return (
-      <div className=\"card\">
+      <div className="card">
         <h3 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
           <History size={16} /> Recent Investigations
         </h3>
@@ -14,7 +14,7 @@ export default function CaseList({ cases, onSelectCase, activeCaseId }) {
   }
 
   return (
-    <div className=\"card\">
+    <div className="card">
       <h3 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
         <History size={16} /> Analyst Case History ({cases.length})
       </h3>
@@ -22,6 +22,7 @@ export default function CaseList({ cases, onSelectCase, activeCaseId }) {
         {cases.map((c) => {
           const score = c.fraud_score?.score || 0;
           const isSelected = c.id === activeCaseId;
+          const badgeClass = score >= 60 ? 'badge badge-red' : score >= 30 ? 'badge badge-amber' : 'badge badge-green';
           return (
             <div
               key={c.id}
@@ -43,7 +44,7 @@ export default function CaseList({ cases, onSelectCase, activeCaseId }) {
                   {c.headers?.from_header || c.headers?.subject || 'Email Analysis'}
                 </div>
               </div>
-              <span className={adge }>
+              <span className={badgeClass}>
                 {score}/100
               </span>
             </div>
