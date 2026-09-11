@@ -31,6 +31,7 @@ export default function Sidebar({
   unreadAlertsCount = 3,
   onOpenSubmit,
   onOpenLogout,
+  currentUser,
 }) {
   const navSections = [
     {
@@ -327,13 +328,26 @@ export default function Sidebar({
 
           {/* User Session Bar */}
           <div className="flex items-center justify-between pt-1 px-1 text-[11px] text-slate-400">
-            <div className="truncate">
-              <span className="text-white font-semibold block truncate text-xs">
-                {currentRole === 'employee' ? 'David Miller' : 'Alex Chen'}
-              </span>
-              <span className="text-[10px] text-redrob-blue truncate block font-mono">
-                {currentRole === 'admin' ? 'SOC Admin' : currentRole === 'analyst' ? 'Lead Analyst' : 'Reporter'}
-              </span>
+            <div className="flex items-center gap-2.5 truncate">
+              {currentUser?.avatar ? (
+                <img
+                  src={currentUser.avatar}
+                  alt={currentUser.name || 'User'}
+                  className="w-7 h-7 rounded-full object-cover border border-white/20 shrink-0"
+                />
+              ) : (
+                <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-redrob-blue to-redrob-violet flex items-center justify-center text-white font-mono text-xs font-bold shrink-0">
+                  {(currentUser?.name || 'S').charAt(0).toUpperCase()}
+                </div>
+              )}
+              <div className="truncate">
+                <span className="text-white font-semibold block truncate text-xs">
+                  {currentRole === 'employee' ? 'David Miller' : (currentUser?.name || 'Shri')}
+                </span>
+                <span className="text-[10px] text-redrob-blue truncate block font-mono">
+                  {currentRole === 'admin' ? 'SOC Admin' : currentRole === 'analyst' ? 'Lead Analyst' : 'Reporter'}
+                </span>
+              </div>
             </div>
             <button
               onClick={onOpenLogout}

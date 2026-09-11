@@ -21,6 +21,7 @@ export default function Navbar({
   onOpenSubmit,
   isSidebarOpen,
   onToggleSidebar,
+  currentUser,
 }) {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
 
@@ -172,25 +173,51 @@ export default function Navbar({
                 onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
                 className="flex items-center gap-1.5 p-1 rounded-full border border-white/10 hover:border-white/20 bg-[#0b1026] transition-all cursor-pointer"
               >
-                <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-redrob-blue to-redrob-violet flex items-center justify-center text-white font-mono text-xs font-bold">
-                  {currentRole === 'employee' ? 'EM' : currentRole === 'admin' ? 'AD' : 'AC'}
+                {currentUser?.avatar ? (
+                  <img
+                    src={currentUser.avatar}
+                    alt={currentUser.name || 'User'}
+                    className="w-7 h-7 rounded-full object-cover border border-white/20"
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                      if (e.currentTarget.nextSibling) {
+                        e.currentTarget.nextSibling.style.display = 'flex';
+                      }
+                    }}
+                  />
+                ) : null}
+                <div
+                  className={`w-7 h-7 rounded-full bg-gradient-to-tr from-redrob-blue to-redrob-violet flex items-center justify-center text-white font-mono text-xs font-bold ${
+                    currentUser?.avatar ? 'hidden' : 'flex'
+                  }`}
+                >
+                  {currentRole === 'employee' ? 'EM' : currentRole === 'admin' ? 'AD' : (currentUser?.name || 'S').charAt(0).toUpperCase()}
                 </div>
                 <ChevronDown className="w-3 h-3 text-slate-400 pr-1" />
               </button>
 
               {isUserMenuOpen && (
                 <div className="absolute right-0 mt-2 w-56 rounded-2xl bg-[#0b1026] border border-white/10 shadow-redrob-card p-2 z-50 animate-fade-in text-xs">
-                  <div className="px-3 py-2 border-b border-white/10">
-                    <p className="text-white font-bold">
-                      {currentRole === 'employee' ? 'David Miller' : 'Alex Chen'}
-                    </p>
-                    <p className="text-[11px] text-redrob-blue capitalize font-mono">
-                      {currentRole === 'employee'
-                        ? 'Employee / Reporter'
-                        : currentRole === 'admin'
-                        ? 'System Administrator'
-                        : 'Lead Forensic Analyst'}
-                    </p>
+                  <div className="px-3 py-2 border-b border-white/10 flex items-center gap-2.5">
+                    {currentUser?.avatar && (
+                      <img
+                        src={currentUser.avatar}
+                        alt="Profile"
+                        className="w-8 h-8 rounded-full object-cover border border-white/20 shrink-0"
+                      />
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <p className="text-white font-bold truncate">
+                        {currentRole === 'employee' ? 'David Miller' : (currentUser?.name || 'Shri')}
+                      </p>
+                      <p className="text-[11px] text-redrob-blue capitalize font-mono truncate">
+                        {currentRole === 'employee'
+                          ? 'Employee / Reporter'
+                          : currentRole === 'admin'
+                          ? 'System Administrator'
+                          : 'Lead Forensic Analyst'}
+                      </p>
+                    </div>
                   </div>
 
                   <div className="py-1">

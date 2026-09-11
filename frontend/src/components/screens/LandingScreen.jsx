@@ -28,7 +28,7 @@ import MarqueeTicker from '../vfx/MarqueeTicker';
 const heroSlides = [
   {
     label: 'TraceMail Forensics',
-    headline: 'Stop Advanced Email Fraud.',
+    headline: 'Stop email fraud before it costs you.',
     sub: 'Before It Reaches Your Workforce.',
     description:
       'Expose phishing, spoofing, and lookalike domains instantly. Reconstruct RFC 822 relay paths, audit DMARC cryptographic signatures, and generate court-ready forensic reports in seconds.',
@@ -185,7 +185,14 @@ function FAQItem({ q, a, isOpen, onToggle }) {
 }
 
 // ─── Main Component ───────────────────────────────────────────────────────────
-export default function LandingScreen({ onStartAnalysis, onOpenAuth, onOpenDashboard }) {
+export default function LandingScreen({
+  onStartAnalysis,
+  onOpenAuth,
+  onOpenDashboard,
+  onOpenLogin,
+  onOpenSignUp,
+  onRequestDemo,
+}) {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [openFaq, setOpenFaq] = useState(0);
   const [countAnimated, setCountAnimated] = useState(false);
@@ -255,9 +262,44 @@ export default function LandingScreen({ onStartAnalysis, onOpenAuth, onOpenDashb
           }}
         />
 
-        <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-8 pt-24 pb-12 flex flex-col min-h-screen">
+        <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-8 pt-8 pb-12 flex flex-col min-h-screen">
+          {/* Top Navigation Bar: Public Marketing Header */}
+          <div className="flex items-center justify-between pb-8 border-b border-white/10">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-xl bg-redrob-blue/20 border border-redrob-blue/40 flex items-center justify-center">
+                <ShieldAlert className="w-4.5 h-4.5 text-redrob-aqua" />
+              </div>
+              <div>
+                <span className="text-lg font-black text-white tracking-tight">TraceMail</span>
+                <span className="text-[10px] text-slate-400 font-mono ml-2">Forensics &amp; Threat Intel</span>
+              </div>
+            </div>
+
+            {/* Top-Right Authentication & Demo Buttons */}
+            <div className="flex items-center gap-3">
+              <button
+                onClick={onRequestDemo || (() => onOpenAuth && onOpenAuth('demo'))}
+                className="hidden sm:inline-flex px-4 py-2 rounded-full border border-white/20 hover:border-white/40 text-slate-200 hover:text-white font-mono text-xs transition-all cursor-pointer"
+              >
+                Request Demo
+              </button>
+              <button
+                onClick={onOpenLogin || (() => onOpenAuth && onOpenAuth('login'))}
+                className="px-4 py-2 rounded-full bg-white/5 hover:bg-white/15 border border-white/10 text-white font-mono text-xs font-bold transition-all cursor-pointer"
+              >
+                Login
+              </button>
+              <button
+                onClick={onOpenSignUp || (() => onOpenAuth && onOpenAuth('signup'))}
+                className="px-5 py-2 rounded-full bg-redrob-blue hover:bg-redrob-blueHover text-white font-mono text-xs font-bold uppercase tracking-wider transition-all shadow-redrob-glow cursor-pointer"
+              >
+                Sign Up
+              </button>
+            </div>
+          </div>
+
           {/* Slide label */}
-          <div className="mb-8">
+          <div className="mt-8 mb-6">
             <span className="text-xs font-mono text-white/50 uppercase tracking-[0.2em]">
               {slide.label}
             </span>
@@ -265,7 +307,7 @@ export default function LandingScreen({ onStartAnalysis, onOpenAuth, onOpenDashb
 
           {/* Main headline — massive editorial typography */}
           <div className="flex-1 flex flex-col justify-center">
-            <h1 className="text-5xl sm:text-7xl lg:text-[90px] font-extrabold text-white leading-[1.0] tracking-tight mb-4">
+            <h1 className="text-5xl sm:text-7xl lg:text-[88px] font-extrabold text-white leading-[1.05] tracking-tight mb-4">
               {slide.headline}
               <span className="block font-serif italic font-light text-white/70 mt-2">
                 {slide.sub}
@@ -279,25 +321,25 @@ export default function LandingScreen({ onStartAnalysis, onOpenAuth, onOpenDashb
             {/* CTA Buttons */}
             <div className="mt-10 flex flex-wrap items-center gap-4">
               <button
-                onClick={onStartAnalysis}
-                className="flex items-center gap-2 px-8 py-4 rounded-full bg-white text-black font-bold text-sm uppercase tracking-wider hover:bg-white/90 transition-all shadow-xl"
+                onClick={onOpenSignUp || (() => onOpenAuth && onOpenAuth('signup'))}
+                className="flex items-center gap-2 px-8 py-4 rounded-full bg-white text-black font-bold text-sm uppercase tracking-wider hover:bg-white/90 transition-all shadow-xl cursor-pointer"
               >
                 <UploadCloud className="w-4 h-4" />
-                Analyze Email Now
+                Sign Up Free
                 <ArrowRight className="w-4 h-4" />
               </button>
               <button
-                onClick={onOpenDashboard}
-                className="flex items-center gap-2 px-7 py-4 rounded-full border border-white/20 text-white/80 hover:border-white/50 hover:text-white font-semibold text-sm transition-all"
+                onClick={onStartAnalysis}
+                className="flex items-center gap-2 px-7 py-4 rounded-full border border-white/20 text-white/90 hover:border-white/50 hover:text-white font-semibold text-sm transition-all cursor-pointer"
               >
-                <Play className="w-3.5 h-3.5" />
-                Live Demo
+                <Play className="w-3.5 h-3.5 text-redrob-aqua" />
+                Try Interactive Scan
               </button>
               <button
-                onClick={onOpenAuth}
-                className="px-6 py-4 rounded-full text-white/40 hover:text-white/70 text-sm transition-all font-sans"
+                onClick={onRequestDemo || (() => onOpenAuth && onOpenAuth('demo'))}
+                className="px-6 py-4 rounded-full text-white/50 hover:text-white text-sm transition-all font-sans cursor-pointer"
               >
-                Sign In / Register
+                Request Enterprise Demo
               </button>
             </div>
           </div>

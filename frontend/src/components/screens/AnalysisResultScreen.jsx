@@ -407,7 +407,7 @@ export default function AnalysisResultScreen({
                 <button
                   onClick={() => {
                     onActionTrigger('create_case');
-                    handleTriggerAction('create_case', 'Case created and assigned to Alex Chen.');
+                    handleTriggerAction('create_case', 'Case created and assigned to Shri.');
                   }}
                   className="p-5 rounded-[24px] bg-[#050814] border border-redrob-blue/30 hover:border-redrob-blue hover:bg-redrob-blue/10 text-left transition-all cursor-pointer group spring-hover"
                 >
