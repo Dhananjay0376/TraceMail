@@ -14,7 +14,7 @@ import {
 import Tabs from '../common/Tabs';
 import { MOCK_USERS } from '../../mock/mockData';
 
-export default function SettingsScreen({ currentRole = 'analyst' }) {
+export default function SettingsScreen({ currentRole = 'analyst', currentUser }) {
   const [activeTab, setActiveTab] = useState('profile');
   const [twoFaEnabled, setTwoFaEnabled] = useState(true);
   const [piiMasking, setPiiMasking] = useState(true);
@@ -65,16 +65,34 @@ export default function SettingsScreen({ currentRole = 'analyst' }) {
       {/* Profile & Security Tab */}
       {activeTab === 'profile' && (
         <div className="p-6 sm:p-8 rounded-[28px] bg-[#0b1026] border border-white/10 shadow-redrob-card space-y-6 font-sans text-xs animate-fade-in">
-          <h3 className="text-sm font-bold text-white uppercase tracking-wider font-mono">
-            Analyst Identity &amp; Cryptographic Authentication
-          </h3>
+          <div className="flex items-center gap-4 pb-4 border-b border-white/10">
+            {currentUser?.avatar ? (
+              <img
+                src={currentUser.avatar}
+                alt={currentUser.name || 'User Profile'}
+                className="w-14 h-14 rounded-2xl object-cover border border-white/20 shadow-lg"
+              />
+            ) : (
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-redrob-blue to-redrob-violet flex items-center justify-center text-white font-mono text-xl font-bold border border-white/20 shadow-lg">
+                {(currentUser?.name || 'S').charAt(0).toUpperCase()}
+              </div>
+            )}
+            <div>
+              <h3 className="text-base font-bold text-white uppercase tracking-wider font-mono">
+                {currentUser?.name || 'Analyst Identity'}
+              </h3>
+              <p className="text-xs text-slate-400 font-mono">
+                {currentUser?.email || 'analyst@acmebank.com'} • <span className="text-redrob-blue">{currentUser?.role || 'Lead Analyst'}</span>
+              </p>
+            </div>
+          </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-slate-400 mb-1.5 font-medium">Full Name</label>
               <input
                 type="text"
-                defaultValue="Alex Chen"
+                defaultValue={currentUser?.name || 'Shri'}
                 className="w-full px-4 py-2.5 rounded-xl bg-[#050814] border border-white/10 text-white focus:border-redrob-blue focus:outline-none focus:ring-1 focus:ring-redrob-blue/40"
               />
             </div>
@@ -84,8 +102,8 @@ export default function SettingsScreen({ currentRole = 'analyst' }) {
               <input
                 type="email"
                 disabled
-                defaultValue="a.chen@apexdefense.com"
-                className="w-full px-4 py-2.5 rounded-xl bg-[#050814]/60 border border-white/5 text-slate-500 focus:outline-none cursor-not-allowed font-mono"
+                defaultValue={currentUser?.email || 'analyst@acmebank.com'}
+                className="w-full px-4 py-2.5 rounded-xl bg-[#050814]/60 border border-white/5 text-slate-400 focus:outline-none cursor-not-allowed font-mono"
               />
             </div>
           </div>

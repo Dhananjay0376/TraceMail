@@ -374,7 +374,7 @@ export const MOCK_CASES = [
     title: "Executive Wire Transfer Impersonation Campaign",
     severity: "critical",
     status: "investigating",
-    assignedTo: "Alex Chen (Senior Threat Analyst)",
+    assignedTo: "Shri (Senior Threat Analyst)",
     createdAt: "2 hours ago",
     updatedAt: "12 minutes ago",
     linkedEmailsCount: 4,
@@ -384,8 +384,8 @@ export const MOCK_CASES = [
     indicators: ["corp-apexdefense.com", "185.220.101.44", "exec-payments88@protonmail-gateway.top"],
     timeline: [
       { time: "09:42 AM", author: "System Sentinel", text: "Email intercepted at inbound MTA. Threat score: 96/100." },
-      { time: "09:44 AM", author: "Alex Chen", text: "Confirmed CEO impersonation. Lookalike domain registered 4 days ago." },
-      { time: "10:15 AM", author: "Alex Chen", text: "Dispatched emergency gateway block rule on IP 185.220.101.44 and domain." },
+      { time: "09:44 AM", author: "Shri", text: "Confirmed CEO impersonation. Lookalike domain registered 4 days ago." },
+      { time: "10:15 AM", author: "Shri", text: "Dispatched emergency gateway block rule on IP 185.220.101.44 and domain." },
       { time: "11:02 AM", author: "Sarah Jenkins (CEO)", text: "Confirmed she did not authorize any wire transfer." }
     ]
   },
@@ -457,15 +457,15 @@ export const MOCK_ALERTS = [
 ];
 
 export const MOCK_AUDIT_LOGS = [
-  { id: "AUD-881", timestamp: "Sep 11, 2026, 11:24 AM", user: "Alex Chen (Analyst)", action: "Firewall Block Rule Created", details: "Added 185.220.101.44 and corp-apexdefense.com to gateway blocklist" },
-  { id: "AUD-880", timestamp: "Sep 11, 2026, 10:48 AM", user: "Alex Chen (Analyst)", action: "Forensic PDF Exported", details: "Generated full forensic dossier for CASE-2026-081" },
+  { id: "AUD-881", timestamp: "Sep 11, 2026, 11:24 AM", user: "Shri (Lead Analyst)", action: "Firewall Block Rule Created", details: "Added 185.220.101.44 and corp-apexdefense.com to gateway blocklist" },
+  { id: "AUD-880", timestamp: "Sep 11, 2026, 10:48 AM", user: "Shri (Lead Analyst)", action: "Forensic PDF Exported", details: "Generated full forensic dossier for CASE-2026-081" },
   { id: "AUD-879", timestamp: "Sep 11, 2026, 09:44 AM", user: "System Automated Triage", action: "Threat Incident Created", details: "Automated ingestion flagged High-Confidence BEC attack from Moscow node" },
   { id: "AUD-878", timestamp: "Sep 11, 2026, 08:35 AM", user: "Marcus Vance (Lead)", action: "Batch Mailbox Purge", details: "Purged 18 phishing emails matching hash #d91823901" },
   { id: "AUD-877", timestamp: "Sep 10, 2026, 05:12 PM", user: "Admin System", action: "API Token Rotated", details: "Splunk SIEM ingestion token refreshed by security policy" },
 ];
 
 export const MOCK_USERS = [
-  { id: "USR-1", name: "Alex Chen", email: "a.chen@apexdefense.com", role: "Security Analyst", status: "Active", mfa: "FIDO2 Hardware Key", lastActive: "Just now" },
+  { id: "USR-1", name: "Shri", email: "shri.analyst@apexdefense.com", role: "Lead Security Analyst", status: "Active", mfa: "FIDO2 Hardware Key", lastActive: "Just now" },
   { id: "USR-2", name: "Marcus Vance", email: "m.vance@apexdefense.com", role: "Incident Lead / Admin", status: "Active", mfa: "Authenticator App", lastActive: "5m ago" },
   { id: "USR-3", name: "Elena Rostova", email: "e.rostova@apexdefense.com", role: "Security Analyst", status: "Active", mfa: "Authenticator App", lastActive: "1h ago" },
   { id: "USR-4", name: "David Miller", email: "david.miller@apexdefense.com", role: "Employee / Reporter", status: "Active", mfa: "SMS Verified", lastActive: "3h ago" },

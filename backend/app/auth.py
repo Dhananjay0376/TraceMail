@@ -7,6 +7,11 @@ from fastapi.responses import RedirectResponse, HTMLResponse
 from google_auth_oauthlib.flow import Flow
 from googleapiclient.discovery import build
 from google.oauth2.credentials import Credentials
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
 
 from app.database import (
     save_monitored_mailbox,
@@ -24,9 +29,12 @@ SCOPES = [
     "https://www.googleapis.com/auth/userinfo.email"
 ]
 
+DEFAULT_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "")
+DEFAULT_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET", "")
+
 def get_google_client_config() -> Dict[str, Any]:
-    client_id = os.getenv("GOOGLE_CLIENT_ID", "")
-    client_secret = os.getenv("GOOGLE_CLIENT_SECRET", "")
+    client_id = os.getenv("GOOGLE_CLIENT_ID") or DEFAULT_CLIENT_ID
+    client_secret = os.getenv("GOOGLE_CLIENT_SECRET") or DEFAULT_CLIENT_SECRET
     return {
         "web": {
             "client_id": client_id,

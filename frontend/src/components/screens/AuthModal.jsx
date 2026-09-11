@@ -1,75 +1,296 @@
-import React, { useState } from 'react';
-import { Lock, Mail, User, Building, KeyRound, ShieldCheck, ArrowRight, CheckCircle2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import {
+  Lock,
+  Mail,
+  User,
+  Building,
+  ShieldCheck,
+  ArrowRight,
+  CheckCircle2,
+  Phone,
+  HelpCircle,
+  Clock,
+  Sparkles,
+  ArrowLeft,
+  KeyRound,
+} from 'lucide-react';
 import Modal from '../common/Modal';
+import { signUpUser, verifyEmailOtp, resendEmailOtp, signInUser, sendPasswordReset, signInWithGoogle } from '../../lib/supabase';
 
-export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
-  const [mode, setMode] = useState('login'); // 'login', 'signup', 'otp', 'forgot'
+export default function AuthModal({ isOpen, onClose, onAuthSuccess, initialMode = 'login' }) {
+  const [mode, setMode] = useState(initialMode); // 'login', 'signup', 'otp', 'forgot', 'demo'
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [name, setName] = useState('');
   const [org, setOrg] = useState('');
   const [role, setRole] = useState('analyst');
+  const [phone, setPhone] = useState('');
+  const [demoNotes, setDemoNotes] = useState('10k');
+  const [agreedTerms, setAgreedTerms] = useState(true);
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
+  const [resendTimer, setResendTimer] = useState(30);
+  const [canResend, setCanResend] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Sync mode when initialMode changes or modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setMode(initialMode);
+      setIsSuccess(false);
+      setErrorMessage('');
+      setOtp(['', '', '', '', '', '']);
+      setIsLoading(false);
+    }
+  }, [isOpen, initialMode]);
+
+  // 30-second countdown for OTP resend
+  useEffect(() => {
+    let interval;
+    if (mode === 'otp' && resendTimer > 0) {
+      interval = setInterval(() => {
+        setResendTimer((prev) => prev - 1);
+      }, 1000);
+    } else if (resendTimer === 0) {
+      setCanResend(true);
+    }
+    return () => clearInterval(interval);
+  }, [mode, resendTimer]);
 
   const handleOtpChange = (index, value) => {
-    if (value.length > 1) value = value[value.length - 1];
+    const val = value.slice(-1);
     const newOtp = [...otp];
-    newOtp[index] = value;
+    newOtp[index] = val;
     setOtp(newOtp);
 
     // Auto-focus next input
-    if (value && index < 5) {
+    if (val && index < 5) {
       const nextInput = document.getElementById(`otp-input-${index + 1}`);
       if (nextInput) nextInput.focus();
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleOtpKeyDown = (index, e) => {
+    if (e.key === 'Backspace' && !otp[index] && index > 0) {
+      const prevInput = document.getElementById(`otp-input-${index - 1}`);
+      if (prevInput) prevInput.focus();
+    }
+  };
+
+  const handleResendOtp = async () => {
+    if (!canResend) return;
+    setResendTimer(30);
+    setCanResend(false);
+    setOtp(['', '', '', '', '', '']);
+    setErrorMessage('');
+    try {
+      await resendEmailOtp({ email });
+    } catch (err) {
+      setErrorMessage('Failed to resend OTP. Please try again.');
+    }
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // TODO: connect to backend API /api/auth/login or /api/auth/signup
+    setErrorMessage('');
 
     if (mode === 'signup') {
-      // Transition to OTP verification step
-      setMode('otp');
+      if (password !== confirmPassword) {
+        setErrorMessage('Passwords do not match. Please re-enter.');
+        return;
+      }
+      if (!agreedTerms) {
+        setErrorMessage('You must agree to the Terms of Service & Privacy Policy.');
+        return;
+      }
+      setIsLoading(true);
+      try {
+        const result = await signUpUser({ email, password, name, org, role });
+        if (result.needsVerification) {
+          setResendTimer(30);
+          setCanResend(false);
+          setMode('otp');
+        } else if (result.user) {
+          // Auto-confirmed (e.g. email auth disabled)
+          setSuccessMessage('Account created! Setting up your workspace...');
+          setIsSuccess(true);
+          setTimeout(() => {
+            setIsSuccess(false);
+            onAuthSuccess && onAuthSuccess({
+              email: result.user.email,
+              name: result.user.user_metadata?.full_name || name,
+              org: result.user.user_metadata?.organization || org,
+              role: result.user.user_metadata?.role || role,
+              isFirstTime: true,
+            });
+            onClose();
+          }, 1200);
+        }
+      } catch (err) {
+        setErrorMessage(err.message || 'Signup failed. Please try again.');
+      } finally {
+        setIsLoading(false);
+      }
       return;
     }
 
-    // Success simulation
-    setIsSuccess(true);
-    setTimeout(() => {
-      setIsSuccess(false);
-      onAuthSuccess && onAuthSuccess({ email, role, name: name || 'Demo User' });
-      onClose();
-    }, 1200);
+    if (mode === 'otp') {
+      const enteredOtp = otp.join('');
+      if (enteredOtp.length < 6) {
+        setErrorMessage('Please enter all 6 digits of your verification code.');
+        return;
+      }
+      setIsLoading(true);
+      try {
+        const result = await verifyEmailOtp({ email, token: enteredOtp });
+        setSuccessMessage('Email verified successfully! Setting up your workspace...');
+        setIsSuccess(true);
+        setTimeout(() => {
+          setIsSuccess(false);
+          onAuthSuccess && onAuthSuccess({
+            email: result.user?.email || email,
+            name: result.user?.user_metadata?.full_name || name,
+            org: result.user?.user_metadata?.organization || org,
+            role: result.user?.user_metadata?.role || role,
+            isFirstTime: true,
+          });
+          onClose();
+        }, 1200);
+      } catch (err) {
+        setErrorMessage(err.message || 'Invalid or expired OTP. Please try again.');
+      } finally {
+        setIsLoading(false);
+      }
+      return;
+    }
+
+    if (mode === 'login') {
+      setIsLoading(true);
+      try {
+        const result = await signInUser({ email, password });
+        setSuccessMessage('Authentication confirmed. Launching security console...');
+        setIsSuccess(true);
+        setTimeout(() => {
+          setIsSuccess(false);
+          onAuthSuccess && onAuthSuccess({
+            email: result.user?.email || email,
+            name: result.user?.name || email.split('@')[0],
+            org: result.user?.org || '',
+            role: result.user?.role || 'analyst',
+            isFirstTime: false,
+          });
+          onClose();
+        }, 1000);
+      } catch (err) {
+        setErrorMessage(err.message || 'Invalid email or password.');
+      } finally {
+        setIsLoading(false);
+      }
+      return;
+    }
+
+    if (mode === 'forgot') {
+      setIsLoading(true);
+      try {
+        await sendPasswordReset({ email });
+        setSuccessMessage(`Password reset link sent to ${email}. Check your inbox.`);
+        setIsSuccess(true);
+        setTimeout(() => {
+          setIsSuccess(false);
+          setMode('login');
+        }, 2500);
+      } catch (err) {
+        setErrorMessage(err.message || 'Failed to send reset email.');
+      } finally {
+        setIsLoading(false);
+      }
+      return;
+    }
+
+    if (mode === 'demo') {
+      setSuccessMessage('Thank you! Our enterprise security architect will contact you within 24 hours.');
+      setIsSuccess(true);
+      setTimeout(() => {
+        setIsSuccess(false);
+        onClose();
+      }, 2500);
+      return;
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    setErrorMessage('');
+    setIsLoading(true);
+    try {
+      await signInWithGoogle();
+      // signInWithGoogle redirects the page, so no further action needed here
+    } catch (err) {
+      setErrorMessage(err.message || 'Google sign-in failed. Please try again.');
+      setIsLoading(false);
+    }
+  };
+
+  const getTitle = () => {
+    switch (mode) {
+      case 'signup':
+        return 'Create Your TraceMail Account';
+      case 'otp':
+        return 'Verify Your Work Email';
+      case 'forgot':
+        return 'Reset Your Password';
+      case 'demo':
+        return 'Request an Enterprise Demo';
+      case 'login':
+      default:
+        return 'Sign In to TraceMail';
+    }
+  };
+
+  const getSubtitle = () => {
+    switch (mode) {
+      case 'signup':
+        return 'Step 1 of 2: Organization Account Creation';
+      case 'otp':
+        return 'Step 2 of 2: 6-Digit One-Time Security Code';
+      case 'forgot':
+        return 'We will send secure recovery instructions to your email';
+      case 'demo':
+        return 'Experience high-volume AI threat triage tailored for your team';
+      case 'login':
+      default:
+        return 'Enter your credentials to access your security operations dashboard';
+    }
   };
 
   return (
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={
-        mode === 'login'
-          ? 'Secure Analyst Authentication'
-          : mode === 'signup'
-          ? 'Create TraceMail Workspace Account'
-          : mode === 'otp'
-          ? 'Two-Factor Hardware/Email Verification'
-          : 'Reset Your Credentials'
-      }
-      subtitle="Enterprise Zero-Trust Authentication Protocol"
+      title={getTitle()}
+      subtitle={getSubtitle()}
       maxWidth="max-w-md"
     >
       {isSuccess ? (
-        <div className="py-8 text-center space-y-3 animate-fade-in font-sans">
-          <div className="w-16 h-16 rounded-2xl bg-redrob-lime/15 border border-redrob-lime/30 text-redrob-lime mx-auto flex items-center justify-center shadow-lg">
+        <div className="py-8 text-center space-y-4 animate-fade-in font-sans">
+          <div className="w-16 h-16 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 mx-auto flex items-center justify-center shadow-lg shadow-emerald-500/10">
             <CheckCircle2 className="w-8 h-8" />
           </div>
-          <h4 className="text-lg font-bold text-white tracking-tight">Identity Verified</h4>
-          <p className="text-xs text-slate-400">Loading your forensic security session...</p>
+          <h4 className="text-lg font-bold text-white tracking-tight">{successMessage}</h4>
+          <p className="text-xs text-slate-400">Please wait while we establish your secure session...</p>
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="space-y-4 font-sans text-xs">
+          {errorMessage && (
+            <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-xs flex items-center gap-2">
+              <ShieldCheck className="w-4 h-4 shrink-0 text-red-400" />
+              <span>{errorMessage}</span>
+            </div>
+          )}
+
+          {/* SIGN UP FIELDS */}
           {mode === 'signup' && (
             <>
               <div>
@@ -82,7 +303,22 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Alex Chen"
-                    className="w-full pl-10 pr-4 py-2.5 rounded-full bg-[#050814] border border-white/10 text-white placeholder-slate-500 focus:border-redrob-blue focus:outline-none focus:ring-1 focus:ring-redrob-blue/40 text-xs"
+                    className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#050814] border border-white/10 text-white placeholder-slate-500 focus:border-redrob-blue focus:outline-none focus:ring-1 focus:ring-redrob-blue/40 text-xs"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-slate-400 mb-1.5 font-medium">Work Email</label>
+                <div className="relative">
+                  <Mail className="w-4 h-4 text-slate-500 absolute left-3.5 top-3" />
+                  <input
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="analyst@acmebank.com"
+                    className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#050814] border border-white/10 text-white placeholder-slate-500 focus:border-redrob-blue focus:outline-none focus:ring-1 focus:ring-redrob-blue/40 text-xs font-mono"
                   />
                 </div>
               </div>
@@ -96,78 +332,69 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
                     required
                     value={org}
                     onChange={(e) => setOrg(e.target.value)}
-                    placeholder="Apex Cyber Defense Corp"
-                    className="w-full pl-10 pr-4 py-2.5 rounded-full bg-[#050814] border border-white/10 text-white placeholder-slate-500 focus:border-redrob-blue focus:outline-none focus:ring-1 focus:ring-redrob-blue/40 text-xs"
+                    placeholder="Acme Bank Security Team"
+                    className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#050814] border border-white/10 text-white placeholder-slate-500 focus:border-redrob-blue focus:outline-none focus:ring-1 focus:ring-redrob-blue/40 text-xs"
                   />
                 </div>
               </div>
 
-              <div>
-                <label className="block text-slate-400 mb-1.5 font-medium">Workspace Role</label>
-                <select
-                  value={role}
-                  onChange={(e) => setRole(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-full bg-[#050814] border border-white/10 text-white focus:border-redrob-blue focus:outline-none text-xs"
-                >
-                  <option value="analyst">Security Operations Analyst (Full Telemetry)</option>
-                  <option value="employee">Employee / Reporter (Simplified Verdicts)</option>
-                  <option value="admin">System Administrator / Lead</option>
-                </select>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-slate-400 mb-1.5 font-medium">Password</label>
+                  <div className="relative">
+                    <Lock className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
+                    <input
+                      type="password"
+                      required
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="••••••••••••"
+                      className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-[#050814] border border-white/10 text-white placeholder-slate-500 focus:border-redrob-blue focus:outline-none text-xs"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-slate-400 mb-1.5 font-medium">Confirm Password</label>
+                  <div className="relative">
+                    <Lock className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
+                    <input
+                      type="password"
+                      required
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      placeholder="••••••••••••"
+                      className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-[#050814] border border-white/10 text-white placeholder-slate-500 focus:border-redrob-blue focus:outline-none text-xs"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-2 pt-1">
+                <input
+                  type="checkbox"
+                  id="terms"
+                  checked={agreedTerms}
+                  onChange={(e) => setAgreedTerms(e.target.checked)}
+                  className="mt-0.5 rounded bg-[#050814] border-white/20 text-redrob-blue focus:ring-0"
+                />
+                <label htmlFor="terms" className="text-[11px] text-slate-400 cursor-pointer">
+                  I agree to the <span className="text-redrob-blue hover:underline">Terms of Service</span> and{' '}
+                  <span className="text-redrob-blue hover:underline">Privacy Policy</span>.
+                </label>
               </div>
             </>
           )}
 
-          {(mode === 'login' || mode === 'signup' || mode === 'forgot') && (
-            <div>
-              <label className="block text-slate-400 mb-1.5 font-medium">Corporate Email Address</label>
-              <div className="relative">
-                <Mail className="w-4 h-4 text-slate-500 absolute left-3.5 top-3" />
-                <input
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="analyst@apexdefense.com"
-                  className="w-full pl-10 pr-4 py-2.5 rounded-full bg-[#050814] border border-white/10 text-white placeholder-slate-500 focus:border-redrob-blue focus:outline-none focus:ring-1 focus:ring-redrob-blue/40 font-mono text-xs"
-                />
-              </div>
-            </div>
-          )}
-
-          {(mode === 'login' || mode === 'signup') && (
-            <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <label className="text-slate-400 font-medium">Password</label>
-                {mode === 'login' && (
-                  <button
-                    type="button"
-                    onClick={() => setMode('forgot')}
-                    className="text-[11px] text-redrob-blue hover:underline"
-                  >
-                    Forgot Password?
-                  </button>
-                )}
-              </div>
-              <div className="relative">
-                <Lock className="w-4 h-4 text-slate-500 absolute left-3.5 top-3" />
-                <input
-                  type="password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••••••"
-                  className="w-full pl-10 pr-4 py-2.5 rounded-full bg-[#050814] border border-white/10 text-white placeholder-slate-500 focus:border-redrob-blue focus:outline-none focus:ring-1 focus:ring-redrob-blue/40 text-xs"
-                />
-              </div>
-            </div>
-          )}
-
+          {/* OTP VERIFICATION FIELDS */}
           {mode === 'otp' && (
-            <div className="space-y-3 py-2">
-              <p className="text-xs text-slate-300">
-                Enter the 6-digit verification code sent to your registered device:
-              </p>
-              <div className="flex justify-between gap-2">
+            <div className="space-y-4 py-2">
+              <div className="p-3.5 rounded-2xl bg-blue-950/30 border border-blue-800/40 text-blue-200 text-xs leading-relaxed">
+                We sent a 6-digit verification code to <span className="font-mono font-bold text-white">{email || 'your email'}</span>.
+                Enter the code below to confirm your account.
+              </div>
+
+              <div className="flex justify-between gap-2 pt-2">
                 {otp.map((digit, idx) => (
                   <input
                     key={idx}
@@ -176,46 +403,234 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
                     maxLength={1}
                     value={digit}
                     onChange={(e) => handleOtpChange(idx, e.target.value)}
-                    className="w-11 h-12 text-center text-lg font-bold rounded-2xl bg-[#050814] border border-white/15 text-redrob-blue focus:border-redrob-blue focus:outline-none font-mono"
+                    onKeyDown={(e) => handleOtpKeyDown(idx, e)}
+                    className="w-11 h-12 text-center text-lg font-bold rounded-xl bg-[#050814] border border-white/20 text-white focus:border-redrob-blue focus:ring-1 focus:ring-redrob-blue focus:outline-none font-mono"
+                    autoFocus={idx === 0}
                   />
                 ))}
               </div>
-              <p className="text-[11px] text-slate-500 text-center font-mono">
-                Didn't receive code? <span className="text-redrob-blue cursor-pointer hover:underline">Resend in 30s</span>
-              </p>
+
+              <div className="text-center pt-2">
+                {canResend ? (
+                  <button
+                    type="button"
+                    onClick={handleResendOtp}
+                    className="text-xs text-redrob-blue font-bold hover:underline cursor-pointer"
+                  >
+                    Resend Code
+                  </button>
+                ) : (
+                  <p className="text-[11px] text-slate-500 font-mono">
+                    Resend Code in <span className="text-slate-300 font-bold">{resendTimer}s</span>
+                  </p>
+                )}
+              </div>
             </div>
           )}
 
+          {/* LOGIN FIELDS */}
+          {mode === 'login' && (
+            <>
+              <div>
+                <label className="block text-slate-400 mb-1.5 font-medium">Work Email</label>
+                <div className="relative">
+                  <Mail className="w-4 h-4 text-slate-500 absolute left-3.5 top-3" />
+                  <input
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="analyst@apexdefense.com"
+                    className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#050814] border border-white/10 text-white placeholder-slate-500 focus:border-redrob-blue focus:outline-none focus:ring-1 focus:ring-redrob-blue/40 text-xs font-mono"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-slate-400 font-medium">Password</label>
+                  <button
+                    type="button"
+                    onClick={() => setMode('forgot')}
+                    className="text-[11px] text-redrob-blue hover:underline"
+                  >
+                    Forgot Password?
+                  </button>
+                </div>
+                <div className="relative">
+                  <Lock className="w-4 h-4 text-slate-500 absolute left-3.5 top-3" />
+                  <input
+                    type="password"
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••••••"
+                    className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#050814] border border-white/10 text-white placeholder-slate-500 focus:border-redrob-blue focus:outline-none focus:ring-1 focus:ring-redrob-blue/40 text-xs"
+                  />
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* FORGOT PASSWORD FIELDS */}
+          {mode === 'forgot' && (
+            <div className="space-y-3">
+              <p className="text-xs text-slate-300 leading-relaxed">
+                Enter the email associated with your account and we'll send you a password reset link.
+              </p>
+              <div>
+                <label className="block text-slate-400 mb-1.5 font-medium">Work Email</label>
+                <div className="relative">
+                  <Mail className="w-4 h-4 text-slate-500 absolute left-3.5 top-3" />
+                  <input
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="analyst@apexdefense.com"
+                    className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#050814] border border-white/10 text-white placeholder-slate-500 focus:border-redrob-blue focus:outline-none text-xs font-mono"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* REQUEST DEMO FIELDS */}
+          {mode === 'demo' && (
+            <>
+              <div>
+                <label className="block text-slate-400 mb-1.5 font-medium">Full Name</label>
+                <div className="relative">
+                  <User className="w-4 h-4 text-slate-500 absolute left-3.5 top-3" />
+                  <input
+                    type="text"
+                    required
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="Jordan Miller"
+                    className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#050814] border border-white/10 text-white placeholder-slate-500 focus:border-redrob-blue focus:outline-none text-xs"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-slate-400 mb-1.5 font-medium">Corporate Email</label>
+                <div className="relative">
+                  <Mail className="w-4 h-4 text-slate-500 absolute left-3.5 top-3" />
+                  <input
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="jordan.miller@enterprise.com"
+                    className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#050814] border border-white/10 text-white placeholder-slate-500 focus:border-redrob-blue focus:outline-none text-xs font-mono"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-slate-400 mb-1.5 font-medium">Organization / Enterprise Name</label>
+                <div className="relative">
+                  <Building className="w-4 h-4 text-slate-500 absolute left-3.5 top-3" />
+                  <input
+                    type="text"
+                    required
+                    value={org}
+                    onChange={(e) => setOrg(e.target.value)}
+                    placeholder="Global Financial Security Corp"
+                    className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#050814] border border-white/10 text-white placeholder-slate-500 focus:border-redrob-blue focus:outline-none text-xs"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-slate-400 mb-1.5 font-medium">Expected Monthly Email Volume</label>
+                <select
+                  value={demoNotes}
+                  onChange={(e) => setDemoNotes(e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-xl bg-[#050814] border border-white/10 text-white focus:border-redrob-blue focus:outline-none text-xs"
+                >
+                  <option value="10k">10,000 - 50,000 emails / month</option>
+                  <option value="100k">50,000 - 250,000 emails / month</option>
+                  <option value="1m">250,000+ emails / month (Enterprise Dedicated MTA)</option>
+                </select>
+              </div>
+            </>
+          )}
+
+          {/* GOOGLE SIGN-IN (login and signup only) */}
+          {(mode === 'login' || mode === 'signup') && (
+            <>
+              <button
+                type="button"
+                onClick={handleGoogleSignIn}
+                disabled={isLoading}
+                className="w-full py-3 rounded-xl bg-white hover:bg-slate-100 text-slate-900 font-bold text-xs flex items-center justify-center gap-2.5 mt-2 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+              >
+                {/* Google SVG Icon */}
+                <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                  <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                  <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                  <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                </svg>
+                <span>Continue with Google</span>
+              </button>
+
+              {/* Divider */}
+              <div className="flex items-center gap-3 mt-2">
+                <div className="flex-1 h-px bg-white/10" />
+                <span className="text-slate-500 text-[11px] font-mono">or</span>
+                <div className="flex-1 h-px bg-white/10" />
+              </div>
+            </>
+          )}
+
+          {/* SUBMIT ACTION BUTTON */}
           <button
             type="submit"
-            className="w-full py-3 rounded-full bg-redrob-blue hover:bg-redrob-blueHover text-white font-bold uppercase tracking-wider text-xs shadow-redrob-glow transition-all cursor-pointer flex items-center justify-center gap-2 mt-2"
+            disabled={isLoading}
+            className="w-full py-3 rounded-xl bg-redrob-blue hover:bg-redrob-blueHover text-white font-bold text-xs uppercase tracking-wider shadow-redrob-glow transition-all cursor-pointer flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            <span>
-              {mode === 'login'
-                ? 'Sign In to Portal'
-                : mode === 'signup'
-                ? 'Continue to Verification'
-                : mode === 'otp'
-                ? 'Verify & Launch Session'
-                : 'Send Reset Instructions'}
-            </span>
-            <ArrowRight className="w-4 h-4" />
+            {isLoading ? (
+              <>
+                <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/></svg>
+                <span>Processing...</span>
+              </>
+            ) : (
+              <>
+                <span>
+                  {mode === 'signup'
+                    ? 'Create Account'
+                    : mode === 'otp'
+                    ? 'Verify & Continue'
+                    : mode === 'login'
+                    ? 'Login to Security Dashboard'
+                    : mode === 'forgot'
+                    ? 'Send Reset Link'
+                    : 'Request Enterprise Demo'}
+                </span>
+                <ArrowRight className="w-4 h-4" />
+              </>
+            )}
           </button>
 
-          {/* Quick toggle between login and signup */}
-          <div className="pt-3 text-center border-t border-white/10">
-            {mode === 'login' ? (
+          {/* BOTTOM NAVIGATION SWITCHES */}
+          <div className="pt-3 text-center border-t border-white/10 space-y-1.5">
+            {mode === 'login' && (
               <p className="text-slate-400 text-xs">
-                Need a new organization workspace?{' '}
+                New user?{' '}
                 <button
                   type="button"
                   onClick={() => setMode('signup')}
                   className="text-redrob-blue font-bold hover:underline"
                 >
-                  Create Account
+                  Sign Up for TraceMail
                 </button>
               </p>
-            ) : (
+            )}
+
+            {mode === 'signup' && (
               <p className="text-slate-400 text-xs">
                 Already have an account?{' '}
                 <button
@@ -223,9 +638,20 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
                   onClick={() => setMode('login')}
                   className="text-redrob-blue font-bold hover:underline"
                 >
-                  Sign In
+                  Login
                 </button>
               </p>
+            )}
+
+            {(mode === 'forgot' || mode === 'otp' || mode === 'demo') && (
+              <button
+                type="button"
+                onClick={() => setMode('login')}
+                className="text-xs text-slate-400 hover:text-white flex items-center justify-center gap-1 mx-auto pt-1"
+              >
+                <ArrowLeft className="w-3.5 h-3.5" />
+                <span>Back to Login</span>
+              </button>
             )}
           </div>
         </form>
