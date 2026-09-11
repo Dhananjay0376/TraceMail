@@ -1,88 +1,107 @@
-﻿import os
+import os
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 
 from app.schemas import (
     AnalyzeResponse, ClassifyRequest, DetectionResult, HeaderDetails,
-    AuthResults, RelayHop, DomainIntel, FraudScoreBreakdown, CampaignMatch
+    AuthResults, RelayHop, DomainIntel, FraudScoreBreakdown, CampaignMatch,
+    EvidenceSeal, URLThreatDetails, AttachmentDetails, CampaignGraphResponse
 )
 from app.detection import classify_email
 from app.forensics import parse_eml_bytes, extract_hops, check_authentication_records
 from app.geointel import geolocate_ip, domain_intel
-from app.correlation import compute_fraud_score, record_and_correlate
+from app.correlation import compute_fraud_score, record_and_correlate, get_campaign_graph_data, rehydrate_graph_from_db
+from app.database import init_db, save_case, get_all_cases, get_case_by_id, get_all_campaigns
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Initializes SQLite schema and rehydrates the in-memory correlation graph on startup."""
+    init_db()
+    existing_cases = get_all_cases(limit=100)
+    rehydrate_graph_from_db(existing_cases)
+    yield
 
 app = FastAPI(
-    title=\"TraceMail Forensics & Intelligence API\",
-    description=\"AI-Powered Email Threat Detection, Geolocation & Forensic Intelligence Platform (SIH 2026 - PS26106)\",
-    version=\"1.0.0\"
+    title="TraceMail Forensics & Intelligence API",
+    description="AI-Powered Email Threat Detection, Geolocation & Forensic Intelligence Platform (SIH 2026 - PS26106)",
+    version="1.2.0",
+    lifespan=lifespan
 )
 
 # Enable CORS for local and deployed frontend origins
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[\"*\"],
+    allow_origins=["*"],
     allow_credentials=True,
-    allow_methods=[\"*\"],
-    allow_headers=[\"*\"],
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
-# In-memory past analysis store
-_analyzed_cases: List[AnalyzeResponse] = []
-
-@app.get(\"/health\")
+@app.get("/health")
 def health_check():
     return {
-        \"status\": \"healthy\",
-        \"timestamp\": datetime.utcnow().isoformat(),
-        \"service\": \"TraceMail Backend Engine\"
+        "status": "healthy",
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "service": "TraceMail Backend Engine",
+        "version": "1.2.0"
     }
 
-@app.post(\"/classify\", response_model=DetectionResult)
+@app.post("/classify", response_model=DetectionResult)
 def classify_text_endpoint(req: ClassifyRequest):
-    \"\"\"Quick text-only classification endpoint for subject and body.\"\"\"
+    """Quick text-only classification endpoint for subject and body."""
     result = classify_email(req.text)
     return DetectionResult(**result)
 
-@app.post(\"/analyze\", response_model=AnalyzeResponse)
+@app.post("/analyze", response_model=AnalyzeResponse)
 async def analyze_email_endpoint(
     file: Optional[UploadFile] = File(None),
     raw_text: Optional[str] = Form(None)
 ):
-    \"\"\"
+    """
     Full forensic analysis endpoint:
-    Parses .eml headers, runs ML detection, checks SPF/DKIM/DMARC,
-    geolocates relay path, performs WHOIS lookup, and calculates the explainable fraud score.
-    \"\"\"
-    case_id = f\"CASE-{uuid.uuid4().hex[:8].upper()}\"
-    timestamp = datetime.utcnow().isoformat()
+    - Computes cryptographic SHA-256 evidence chain-of-custody seal
+    - Parses RFC-822 MIME headers and multi-part bodies
+    - Extracts and analyzes embedded URLs & attachments
+    - Validates SPF, DKIM, and DMARC protocol alignment
+    - Reconstructs server relay hops and geolocates originating IP
+    - Executes WHOIS domain age and DNS MX cross-checks
+    - Calculates transparent, explainable fraud risk score
+    - Persists investigation into SQLite and updates NetworkX campaign graph
+    """
+    case_id = f"CASE-{uuid.uuid4().hex[:8].upper()}"
+    timestamp = datetime.now(timezone.utc).isoformat()
 
     if file:
         content = await file.read()
     elif raw_text:
-        content = raw_text.encode(\"utf-8\")
+        content = raw_text.encode("utf-8")
     else:
-        raise HTTPException(status_code=400, detail=\"Either an .eml file or raw_text is required.\")
+        raise HTTPException(status_code=400, detail="Either an .eml file or raw_text is required.")
 
-    # 1. Header and MIME parsing
+    # 1. Header, MIME, URL, Attachment & Evidence Seal parsing
     parsed = parse_eml_bytes(content)
-    body_text = parsed.get(\"body\") or \"\"
+    body_text = parsed.get("body") or ""
+    evidence_seal = EvidenceSeal(**parsed["evidence_seal"])
+    extracted_urls = [URLThreatDetails(**u) for u in parsed.get("extracted_urls", [])]
+    attachments = [AttachmentDetails(**a) for a in parsed.get("attachments", [])]
 
-    # 2. NLP / ML Text Classification
-    text_to_classify = f\"{parsed.get('subject', '')} {body_text}\".strip() or \"No body text\"
+    # 2. NLP / ML Text Threat Classification
+    text_to_classify = f"{parsed.get('subject', '')} {body_text}".strip() or "No body text"
     detection_raw = classify_email(text_to_classify)
     detection = DetectionResult(**detection_raw)
 
     # 3. Relay path & IP extraction
-    hop_ips = extract_hops(parsed.get(\"received_chain\", []))
+    hop_ips = extract_hops(parsed.get("received_chain", []))
     
     # 4. Domain & Auth checks
-    from_header = parsed.get(\"from\", \"\")
-    sender_domain = from_header.split(\"@\")[-1].rstrip(\">\").strip() if \"@\" in from_header else \"\"
-    return_path = parsed.get(\"return_path\", \"\")
-    return_domain = return_path.split(\"@\")[-1].rstrip(\">\").strip() if \"@\" in return_path else \"\"
+    from_header = parsed.get("from", "")
+    sender_domain = from_header.split("@")[-1].rstrip(">").strip() if "@" in from_header else ""
+    return_path = parsed.get("return_path", "")
+    return_domain = return_path.split("@")[-1].rstrip(">").strip() if "@" in return_path else ""
     mismatch = bool(sender_domain and return_domain and sender_domain.lower() != return_domain.lower())
 
     auth_raw = check_authentication_records(sender_domain, content)
@@ -95,14 +114,14 @@ async def analyze_email_endpoint(
         trace_hops.append(RelayHop(
             hop_index=idx + 1,
             ip=ip,
-            city=geo.get(\"city\"),
-            region=geo.get(\"region\"),
-            country=geo.get(\"country\"),
-            org=geo.get(\"org\"),
-            lat=geo.get(\"lat\"),
-            lon=geo.get(\"lon\"),
+            city=geo.get("city"),
+            region=geo.get("region"),
+            country=geo.get("country"),
+            org=geo.get("org"),
+            lat=geo.get("lat"),
+            lon=geo.get("lon"),
             is_origin=(idx == 0),
-            is_hosting=geo.get(\"is_hosting\", False)
+            is_hosting=geo.get("is_hosting", False)
         ))
 
     # 6. WHOIS & DNS Intel
@@ -116,13 +135,15 @@ async def analyze_email_endpoint(
 
     score_dict = compute_fraud_score(
         model_prob=detection.confidence,
-        is_phishing_label=(detection.label in [\"Phishing\", \"Suspicious\", \"BEC\"]),
+        is_phishing_label=(detection.label in ["Phishing", "Suspicious", "BEC"]),
         spf_status=auth_results.spf_status,
         dkim_status=auth_results.dkim_status,
         dmarc_status=auth_results.dmarc_status,
         domain_age_days=dom_age,
         is_hosting_ip=origin_is_hosting,
-        sender_return_path_mismatch=mismatch
+        sender_return_path_mismatch=mismatch,
+        extracted_urls=[u.model_dump() for u in extracted_urls],
+        attachments=[a.model_dump() for a in attachments]
     )
     fraud_score = FraudScoreBreakdown(**score_dict)
 
@@ -130,35 +151,63 @@ async def analyze_email_endpoint(
     campaign_raw = record_and_correlate(
         case_id=case_id,
         domain=sender_domain,
-        originating_ip=origin_hop.ip if origin_hop else None
+        originating_ip=origin_hop.ip if origin_hop else None,
+        label=detection.label,
+        score=fraud_score.score,
+        risk_level=fraud_score.risk_level
     )
     campaign = CampaignMatch(**campaign_raw) if campaign_raw else None
 
     response = AnalyzeResponse(
         id=case_id,
         timestamp=timestamp,
+        evidence_seal=evidence_seal,
         detection=detection,
         headers=HeaderDetails(
-            from_header=parsed.get(\"from\"),
-            return_path=parsed.get(\"return_path\"),
-            reply_to=parsed.get(\"reply_to\"),
-            message_id=parsed.get(\"message_id\"),
-            subject=parsed.get(\"subject\"),
-            date=parsed.get(\"date\"),
+            from_header=parsed.get("from"),
+            return_path=parsed.get("return_path"),
+            reply_to=parsed.get("reply_to"),
+            message_id=parsed.get("message_id"),
+            subject=parsed.get("subject"),
+            date=parsed.get("date"),
             auth_results=auth_results,
-            received_chain=parsed.get(\"received_chain\", [])
+            received_chain=parsed.get("received_chain", [])
         ),
         trace=trace_hops,
         domain_intel=dom_intel,
+        extracted_urls=extracted_urls,
+        attachments=attachments,
         fraud_score=fraud_score,
         campaign=campaign,
-        raw_body_preview=body_text[:400] + (\"...\" if len(body_text) > 400 else \"\")
+        raw_body_preview=body_text[:400] + ("..." if len(body_text) > 400 else "")
     )
 
-    _analyzed_cases.insert(0, response)
+    # 9. Persist to SQLite Database
+    save_case(response.model_dump())
+
     return response
 
-@app.get(\"/cases\", response_model=List[AnalyzeResponse])
+@app.get("/cases", response_model=List[AnalyzeResponse])
 def list_cases():
-    \"\"\"Returns recent analyzed cases for the analyst dashboard history.\"\"\"
-    return _analyzed_cases[:20]
+    """Returns recent analyzed cases from the SQLite persistent database."""
+    return get_all_cases(limit=30)
+
+@app.get("/cases/{case_id}", response_model=AnalyzeResponse)
+def get_case(case_id: str):
+    """Fetches a specific investigation case by ID."""
+    case = get_case_by_id(case_id)
+    if not case:
+        raise HTTPException(status_code=404, detail="Case not found")
+    return case
+
+@app.get("/campaign-graph", response_model=CampaignGraphResponse)
+def campaign_graph_endpoint():
+    """Returns the full interconnected threat graph (nodes & edges) for network visualization."""
+    return get_campaign_graph_data()
+
+@app.get("/campaigns", response_model=List[Dict[str, Any]])
+def list_campaigns():
+    """Returns all multi-target campaigns discovered across cases."""
+    return get_all_campaigns()
+
+

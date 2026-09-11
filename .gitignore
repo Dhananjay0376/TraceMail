@@ -1,4 +1,4 @@
-﻿# AI Agent Plugins
+# AI Agent Plugins
 get-shit-done/
 coderabbit/
 ralph-loop/
@@ -38,3 +38,5 @@ Thumbs.db
 .vscode/
 .idea/
 *.log
+*.db
+*.sqlite3

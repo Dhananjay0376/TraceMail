@@ -1,4 +1,4 @@
-﻿from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field
 from typing import List, Optional, Dict, Any
 
 class ClassifyRequest(BaseModel):
@@ -62,13 +62,62 @@ class CampaignMatch(BaseModel):
     shared_domain: Optional[str] = None
     related_cases_count: int = 0
 
+class EvidenceSeal(BaseModel):
+    sha256: str = Field(..., description="Cryptographic SHA-256 evidence digest")
+    md5: str = Field(..., description="MD5 legacy hash digest")
+    file_size_bytes: int = Field(..., description="Byte size of the ingested evidence file")
+    ingest_timestamp: str = Field(..., description="ISO-8601 UTC timestamp of ingestion")
+    parser_version: str = Field("TraceMail-MIME-v1.2", description="Forensics parser engine version")
+    custody_status: str = Field("Verified & Immutable", description="Evidentiary integrity status")
+
+class URLThreatDetails(BaseModel):
+    url: str
+    domain: str
+    is_ip_based: bool = False
+    is_shortened: bool = False
+    is_mismatched_anchor: bool = False
+    anchor_text: Optional[str] = None
+    risk_score: float = 0.0
+    threat_flags: List[str] = []
+
+class AttachmentDetails(BaseModel):
+    filename: str
+    content_type: str
+    size_bytes: int
+    sha256: str
+    is_suspicious_extension: bool = False
+    threat_level: str = "Safe"
+
 class AnalyzeResponse(BaseModel):
     id: str
     timestamp: str
+    evidence_seal: EvidenceSeal
     detection: DetectionResult
     headers: HeaderDetails
     trace: List[RelayHop]
     domain_intel: Optional[DomainIntel] = None
+    extracted_urls: List[URLThreatDetails] = []
+    attachments: List[AttachmentDetails] = []
     fraud_score: FraudScoreBreakdown
     campaign: Optional[CampaignMatch] = None
     raw_body_preview: Optional[str] = None
+
+class GraphNode(BaseModel):
+    id: str
+    label: str
+    type: str  # "case", "domain", "ip", "campaign"
+    risk_level: Optional[str] = None
+    score: Optional[int] = None
+    details: Optional[Dict[str, Any]] = None
+
+class GraphEdge(BaseModel):
+    source: str
+    target: str
+    relation: str
+
+class CampaignGraphResponse(BaseModel):
+    nodes: List[GraphNode]
+    edges: List[GraphEdge]
+    total_cases: int
+    total_campaigns: int
+
