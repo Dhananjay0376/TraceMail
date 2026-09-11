@@ -1,181 +1,102 @@
-import React from 'react';
-import { Mail, Shield, CheckCircle2, XCircle, AlertCircle, Globe, Lock, Link as LinkIcon, Paperclip, AlertTriangle } from 'lucide-react';
+import React, { useState } from 'react'
+import { GitCommit, Clock, Server, ChevronDown, ChevronUp, Terminal } from 'lucide-react'
 
-export default function HeaderTrace({ data }) {
-  if (!data || !data.headers) return null;
+export default function HeaderTrace({ hops, originIp }) {
+  const [expandedIndex, setExpandedIndex] = useState(null)
 
-  const { headers, domain_intel, evidence_seal, extracted_urls, attachments } = data;
-  const auth = headers.auth_results || {};
-
-  const renderAuthBadge = (status) => {
-    const s = (status || '').toLowerCase();
-    if (s === 'pass') {
-      return <span className="badge badge-green"><CheckCircle2 size={12} /> PASS</span>;
-    } else if (s === 'fail') {
-      return <span className="badge badge-red"><XCircle size={12} /> FAIL</span>;
-    } else {
-      return <span className="badge badge-amber"><AlertCircle size={12} /> {s.toUpperCase() || 'NONE'}</span>;
-    }
-  };
+  if (!hops || hops.length === 0) return null
 
   return (
-    <div className="card">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <h2 style={{ fontSize: '1.25rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8 }}>
-          <Mail size={20} color="#60a5fa" /> Technical Header & Authentication Forensics
-        </h2>
-        {evidence_seal && (
-          <span className="badge badge-green" title={`SHA-256: ${evidence_seal.sha256}`}>
-            <Lock size={12} /> Chain-of-Custody Sealed
-          </span>
-        )}
-      </div>
-
-      {/* Chain-of-Custody Evidence Seal */}
-      {evidence_seal && (
-        <div style={{
-          background: '#091e2b',
-          border: '1px solid #0284c7',
-          borderRadius: 8,
-          padding: '10px 14px',
-          marginBottom: 16,
-          fontSize: '0.8rem',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 4
-        }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', color: '#38bdf8', fontWeight: 600 }}>
-            <span>Evidentiary Integrity Seal ({evidence_seal.parser_version})</span>
-            <span>{evidence_seal.file_size_bytes} Bytes</span>
-          </div>
-          <div style={{ color: '#94a3b8', wordBreak: 'break-all', fontFamily: 'JetBrains Mono, monospace', fontSize: '0.75rem' }}>
-            <strong>SHA-256:</strong> {evidence_seal.sha256}
-          </div>
-        </div>
-      )}
-
-      {/* Header Metadata Grid */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-        gap: 12,
-        marginBottom: 20
-      }}>
-        <div style={{ background: '#0f172a', padding: 12, borderRadius: 8 }}>
-          <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Display 'From' Header</div>
-          <code style={{ fontSize: '0.85rem', color: '#38bdf8', wordBreak: 'break-all' }}>{headers.from_header || 'N/A'}</code>
-        </div>
-        <div style={{ background: '#0f172a', padding: 12, borderRadius: 8 }}>
-          <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Return-Path (Actual Envelope)</div>
-          <code style={{ fontSize: '0.85rem', color: '#f59e0b', wordBreak: 'break-all' }}>{headers.return_path || 'N/A'}</code>
-        </div>
-        <div style={{ background: '#0f172a', padding: 12, borderRadius: 8 }}>
-          <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Reply-To Target</div>
-          <code style={{ fontSize: '0.85rem', color: '#e2e8f0', wordBreak: 'break-all' }}>{headers.reply_to || 'N/A'}</code>
-        </div>
-        <div style={{ background: '#0f172a', padding: 12, borderRadius: 8 }}>
-          <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Message-ID</div>
-          <code style={{ fontSize: '0.75rem', color: '#94a3b8', wordBreak: 'break-all' }}>{headers.message_id || 'N/A'}</code>
-        </div>
-      </div>
-
-      {/* SPF, DKIM, DMARC Authentication Status */}
-      <h3 style={{ fontSize: '0.9rem', color: '#94a3b8', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
-        <Shield size={16} /> Domain Protocol Alignment Verification
-      </h3>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, marginBottom: 20 }}>
-        <div style={{ background: '#0f172a', padding: 12, borderRadius: 8, textAlign: 'center' }}>
-          <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginBottom: 6 }}>SPF Check</div>
-          {renderAuthBadge(auth.spf_status)}
-        </div>
-        <div style={{ background: '#0f172a', padding: 12, borderRadius: 8, textAlign: 'center' }}>
-          <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginBottom: 6 }}>DKIM Signature</div>
-          {renderAuthBadge(auth.dkim_status)}
-        </div>
-        <div style={{ background: '#0f172a', padding: 12, borderRadius: 8, textAlign: 'center' }}>
-          <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginBottom: 6 }}>DMARC Policy</div>
-          {renderAuthBadge(auth.dmarc_status)}
-        </div>
-      </div>
-
-      {/* Domain WHOIS Intelligence */}
-      {domain_intel && (
-        <div style={{ marginBottom: 16 }}>
-          <h3 style={{ fontSize: '0.9rem', color: '#94a3b8', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
-            <Globe size={16} /> Domain Intelligence & WHOIS Age
+    <div className="rounded-2xl border border-slate-800 bg-[#0c1222] overflow-hidden">
+      <div className="p-4 border-b border-slate-800 bg-slate-900/60 flex items-center justify-between">
+        <div className="flex items-center space-x-2">
+          <GitCommit className="h-4 w-4 text-cyan-400" />
+          <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-300">
+            Reconstructed Relay Path ({hops.length} Hops, Chronological)
           </h3>
-          <div style={{ background: '#0f172a', padding: 12, borderRadius: 8, fontSize: '0.85rem', display: 'flex', flexWrap: 'wrap', gap: 16 }}>
-            <div><strong>Domain:</strong> <code style={{ color: '#38bdf8' }}>{domain_intel.domain}</code></div>
-            <div><strong>Registrar:</strong> {domain_intel.registrar || 'Unknown'}</div>
-            <div>
-              <strong>Domain Age:</strong>{' '}
-              <span style={{ color: domain_intel.is_new_domain ? '#ef4444' : '#10b981', fontWeight: 700 }}>
-                {domain_intel.age_days} days {domain_intel.is_new_domain ? '(NEW/SUSPICIOUS)' : '(Established)'}
-              </span>
-            </div>
-            <div><strong>MX Records:</strong> {domain_intel.mx_records?.length > 0 ? domain_intel.mx_records.join(', ') : 'None'}</div>
-          </div>
         </div>
-      )}
+        <span className="text-xs text-slate-500 font-mono">Oldest (Origin) → Newest (Recipient)</span>
+      </div>
 
-      {/* Extracted URLs Inspection */}
-      {extracted_urls && extracted_urls.length > 0 && (
-        <div style={{ marginBottom: 16 }}>
-          <h3 style={{ fontSize: '0.9rem', color: '#94a3b8', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
-            <LinkIcon size={16} /> Extracted Hyperlinks ({extracted_urls.length})
-          </h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {extracted_urls.map((u, i) => (
-              <div key={i} style={{ background: '#0f172a', padding: '10px 12px', borderRadius: 6, fontSize: '0.8rem' }}>
-                <div style={{ wordBreak: 'break-all', color: '#38bdf8', fontFamily: 'JetBrains Mono, monospace' }}>
-                  {u.url}
-                </div>
-                {u.threat_flags?.length > 0 && (
-                  <div style={{ marginTop: 6, display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                    {u.threat_flags.map((flag, fi) => (
-                      <span key={fi} className="badge badge-red" style={{ fontSize: '0.7rem' }}>
-                        <AlertTriangle size={10} /> {flag}
-                      </span>
-                    ))}
+      <div className="divide-y divide-slate-800/60">
+        {hops.map((hop, idx) => {
+          const isOrigin = idx === 0
+          const isDest = idx === hops.length - 1 && hops.length > 1
+          const isExpanded = expandedIndex === idx
+
+          return (
+            <div key={idx} className="p-3.5 hover:bg-slate-900/40 transition-colors">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs">
+                {/* Hop Header & Host info */}
+                <div className="flex items-start space-x-3">
+                  <div className={`h-7 w-7 rounded-lg flex items-center justify-center font-mono font-bold text-xs shrink-0 ${
+                    isOrigin
+                      ? 'bg-red-950 text-red-400 border border-red-800'
+                      : isDest
+                      ? 'bg-emerald-950 text-emerald-400 border border-emerald-800'
+                      : 'bg-slate-800 text-slate-300 border border-slate-700'
+                  }`}>
+                    {hop.hop_number || idx + 1}
                   </div>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
 
-      {/* Attachments Inspection */}
-      {attachments && attachments.length > 0 && (
-        <div>
-          <h3 style={{ fontSize: '0.9rem', color: '#94a3b8', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
-            <Paperclip size={16} /> Attached Files ({attachments.length})
-          </h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {attachments.map((a, i) => (
-              <div key={i} style={{
-                background: a.is_suspicious_extension ? '#450a0a' : '#0f172a',
-                border: a.is_suspicious_extension ? '1px solid #dc2626' : '1px solid #1e293b',
-                padding: '10px 12px',
-                borderRadius: 6,
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                fontSize: '0.8rem'
-              }}>
-                <div>
-                  <strong style={{ color: a.is_suspicious_extension ? '#fca5a5' : '#f1f5f9' }}>{a.filename}</strong>
-                  <div style={{ color: '#94a3b8', fontSize: '0.75rem' }}>{a.content_type} • {a.size_bytes} Bytes</div>
+                  <div>
+                    <div className="flex items-center space-x-2">
+                      <span className="font-bold text-slate-200">
+                        {isOrigin ? 'Originating Server' : isDest ? 'Recipient Mail Gateway' : `Intermediate Relay MTA`}
+                      </span>
+                      <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-cyan-300 border border-slate-700">
+                        {hop.protocol || 'SMTP'}
+                      </span>
+                    </div>
+
+                    <div className="text-slate-400 font-mono text-[11px] mt-0.5 flex items-center space-x-2">
+                      <span>from: <strong className="text-slate-300">{hop.from_host}</strong></span>
+                      <span>→</span>
+                      <span>by: <strong className="text-slate-300">{hop.by_host}</strong></span>
+                    </div>
+                  </div>
                 </div>
-                <span className={`badge ${a.is_suspicious_extension ? 'badge-red' : 'badge-green'}`}>
-                  {a.threat_level}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
 
+                {/* Hop IP, Location & Delay */}
+                <div className="flex items-center space-x-4 ml-10 md:ml-0">
+                  <div className="text-right font-mono">
+                    <div className="text-cyan-400 font-semibold">{hop.ip || 'Internal IP'}</div>
+                    <div className="text-slate-500 text-[10px]">{hop.city ? `${hop.city}, ${hop.country}` : 'No Geo'}</div>
+                  </div>
+
+                  {hop.delay_seconds > 0 ? (
+                    <div className="flex items-center space-x-1 text-amber-400 font-mono text-[11px] bg-amber-950/30 px-2 py-1 rounded border border-amber-800/40">
+                      <Clock className="h-3 w-3" />
+                      <span>+{hop.delay_seconds}s</span>
+                    </div>
+                  ) : (
+                    <div className="text-slate-600 text-[11px] font-mono">&lt;1s</div>
+                  )}
+
+                  <button
+                    onClick={() => setExpandedIndex(isExpanded ? null : idx)}
+                    className="p-1 rounded text-slate-400 hover:text-white hover:bg-slate-800 cursor-pointer"
+                    title="View Raw Header"
+                  >
+                    {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Raw Header Drawer */}
+              {isExpanded && (
+                <div className="mt-3 p-3 bg-slate-950 rounded-lg border border-slate-800 font-mono text-[11px] text-slate-400 break-all">
+                  <div className="text-cyan-400 text-[10px] uppercase font-bold mb-1 flex items-center space-x-1">
+                    <Terminal className="h-3 w-3" />
+                    <span>Raw RFC 5322 Received Header</span>
+                  </div>
+                  {hop.raw_header}
+                </div>
+              )}
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}

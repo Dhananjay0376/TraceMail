@@ -1,194 +1,194 @@
-import React, { useState } from 'react';
-import axios from 'axios';
-import { UploadCloud, FileText, Send, AlertCircle, Loader2 } from 'lucide-react';
+import React, { useState } from 'react'
+import { UploadCloud, FileText, X, AlertCircle, Loader2 } from 'lucide-react'
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+export default function UploadPanel({ isOpen, onClose, onAnalyzeFile, onAnalyzeText, loading }) {
+  const [tab, setTab] = useState('file') // 'file' or 'text'
+  const [dragActive, setDragActive] = useState(false)
+  const [rawText, setRawText] = useState('')
+  const [selectedFile, setSelectedFile] = useState(null)
+  const [error, setError] = useState(null)
 
-export default function UploadPanel({ onAnalysisComplete }) {
-  const [file, setFile] = useState(null);
-  const [rawText, setRawText] = useState('');
-  const [mode, setMode] = useState('file'); // 'file' or 'text'
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  if (!isOpen) return null
+
+  const handleDrag = (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (e.type === 'dragenter' || e.type === 'dragover') {
+      setDragActive(true)
+    } else if (e.type === 'dragleave') {
+      setDragActive(false)
+    }
+  }
+
+  const handleDrop = (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setDragActive(false)
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      setSelectedFile(e.dataTransfer.files[0])
+      setError(null)
+    }
+  }
 
   const handleFileChange = (e) => {
     if (e.target.files && e.target.files[0]) {
-      setFile(e.target.files[0]);
-      setError(null);
+      setSelectedFile(e.target.files[0])
+      setError(null)
     }
-  };
+  }
 
-  const handleDrop = (e) => {
-    e.preventDefault();
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      setFile(e.dataTransfer.files[0]);
-      setError(null);
-    }
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
-
-    const formData = new FormData();
-    if (mode === 'file') {
-      if (!file) {
-        setError('Please select an .eml email file to upload.');
-        setLoading(false);
-        return;
+  const handleSubmit = async () => {
+    setError(null)
+    if (tab === 'file') {
+      if (!selectedFile) {
+        setError('Please select an .eml file to upload')
+        return
       }
-      formData.append('file', file);
+      try {
+        await onAnalyzeFile(selectedFile)
+        onClose()
+      } catch (err) {
+        setError(err.message || 'Analysis failed')
+      }
     } else {
       if (!rawText.trim()) {
-        setError('Please paste the email content or headers.');
-        setLoading(false);
-        return;
+        setError('Please paste raw email headers and body text')
+        return
       }
-      formData.append('raw_text', rawText);
+      try {
+        await onAnalyzeText(rawText)
+        onClose()
+      } catch (err) {
+        setError(err.message || 'Analysis failed')
+      }
     }
-
-    try {
-      const resp = await axios.post(`${API_BASE}/analyze`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
-      onAnalysisComplete(resp.data);
-    } catch (err) {
-      console.error('Analysis failed', err);
-      setError(err.response?.data?.detail || 'Failed to analyze email. Ensure backend is running.');
-    } finally {
-      setLoading(false);
-    }
-  };
+  }
 
   return (
-    <div className="card">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <h2 style={{ fontSize: '1.25rem', fontWeight: 700 }}>Ingest & Analyze Email</h2>
-        <div style={{ display: 'flex', gap: 8 }}>
+    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="bg-[#0c1222] border border-slate-800 rounded-2xl max-w-xl w-full p-6 shadow-2xl space-y-5">
+        <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+          <div className="flex items-center space-x-2">
+            <UploadCloud className="h-5 w-5 text-cyan-400" />
+            <h3 className="text-base font-bold text-white uppercase tracking-wider">
+              Ingest Email for Forensic Triage
+            </h3>
+          </div>
           <button
-            type="button"
-            onClick={() => setMode('file')}
-            style={{
-              padding: '6px 14px',
-              borderRadius: 6,
-              border: 'none',
-              background: mode === 'file' ? '#2563eb' : '#1e293b',
-              color: '#fff',
-              cursor: 'pointer',
-              fontWeight: 600
-            }}
+            onClick={onClose}
+            className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 cursor-pointer"
           >
-            Upload .EML
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        {/* Tab switch */}
+        <div className="flex rounded-lg bg-slate-900 p-1 border border-slate-800">
+          <button
+            onClick={() => setTab('file')}
+            className={`flex-1 py-1.5 rounded-md text-xs font-semibold transition-all flex items-center justify-center space-x-1.5 cursor-pointer ${
+              tab === 'file' ? 'bg-cyan-500 text-slate-950 shadow' : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <UploadCloud className="h-3.5 w-3.5" />
+            <span>Upload .EML File</span>
           </button>
           <button
-            type="button"
-            onClick={() => setMode('text')}
-            style={{
-              padding: '6px 14px',
-              borderRadius: 6,
-              border: 'none',
-              background: mode === 'text' ? '#2563eb' : '#1e293b',
-              color: '#fff',
-              cursor: 'pointer',
-              fontWeight: 600
-            }}
+            onClick={() => setTab('text')}
+            className={`flex-1 py-1.5 rounded-md text-xs font-semibold transition-all flex items-center justify-center space-x-1.5 cursor-pointer ${
+              tab === 'text' ? 'bg-cyan-500 text-slate-950 shadow' : 'text-slate-400 hover:text-white'
+            }`}
           >
-            Raw Text / Headers
+            <FileText className="h-3.5 w-3.5" />
+            <span>Paste Raw Email</span>
+          </button>
+        </div>
+
+        {/* Error notice */}
+        {error && (
+          <div className="p-3 rounded-lg bg-red-950/40 border border-red-800/60 text-xs text-red-300 flex items-center space-x-2">
+            <AlertCircle className="h-4 w-4 shrink-0 text-red-400" />
+            <span>{error}</span>
+          </div>
+        )}
+
+        {/* File Drag Drop Tab */}
+        {tab === 'file' ? (
+          <div
+            onDragEnter={handleDrag}
+            onDragLeave={handleDrag}
+            onDragOver={handleDrag}
+            onDrop={handleDrop}
+            className={`border-2 border-dashed rounded-xl p-8 text-center transition-all flex flex-col items-center justify-center cursor-pointer ${
+              dragActive
+                ? 'border-cyan-400 bg-cyan-950/20'
+                : 'border-slate-700 bg-slate-900/40 hover:border-slate-600'
+            }`}
+          >
+            <UploadCloud className="h-10 w-10 text-cyan-400 mb-2" />
+            {selectedFile ? (
+              <div className="space-y-1">
+                <p className="text-sm font-bold text-cyan-300 font-mono">{selectedFile.name}</p>
+                <p className="text-xs text-slate-400">{(selectedFile.size / 1024).toFixed(1)} KB</p>
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); setSelectedFile(null); }}
+                  className="text-xs text-red-400 hover:underline pt-1"
+                >
+                  Remove file
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <p className="text-sm font-semibold text-slate-200">
+                  Drag and drop your <span className="text-cyan-400 font-mono">.eml</span> file here
+                </p>
+                <p className="text-xs text-slate-500">or click below to browse from your device</p>
+                <label className="inline-block mt-2 px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 cursor-pointer">
+                  Browse File
+                  <input
+                    type="file"
+                    accept=".eml,message/rfc822"
+                    onChange={handleFileChange}
+                    className="hidden"
+                  />
+                </label>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="space-y-2">
+            <label className="block text-xs font-semibold text-slate-400">
+              Raw RFC 5322 Email (Headers + Body):
+            </label>
+            <textarea
+              rows={8}
+              value={rawText}
+              onChange={(e) => setRawText(e.target.value)}
+              placeholder="From: sender@domain.com&#10;To: recipient@domain.com&#10;Subject: Urgent&#10;Received: from mail.server.com ([1.2.3.4])...&#10;&#10;Email body message here..."
+              className="w-full rounded-xl bg-slate-950 border border-slate-800 p-3 text-xs font-mono text-slate-200 placeholder-slate-600 focus:outline-none focus:border-cyan-500"
+            />
+          </div>
+        )}
+
+        {/* Action buttons */}
+        <div className="flex items-center justify-end space-x-3 pt-2">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-white cursor-pointer"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleSubmit}
+            disabled={loading}
+            className="px-5 py-2 rounded-xl text-xs font-bold bg-cyan-500 hover:bg-cyan-400 text-slate-950 flex items-center space-x-2 shadow-lg shadow-cyan-500/20 disabled:opacity-50 transition-all cursor-pointer"
+          >
+            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <UploadCloud className="h-4 w-4" />}
+            <span>{loading ? 'Analyzing...' : 'Run Forensic Analysis'}</span>
           </button>
         </div>
       </div>
-
-      <form onSubmit={handleSubmit}>
-        {mode === 'file' ? (
-          <div
-            onDragOver={(e) => e.preventDefault()}
-            onDrop={handleDrop}
-            style={{
-              border: '2px dashed #3b82f6',
-              borderRadius: 8,
-              padding: '36px 20px',
-              textAlign: 'center',
-              backgroundColor: '#0f172a',
-              cursor: 'pointer'
-            }}
-            onClick={() => document.getElementById('eml-input').click()}
-          >
-            <UploadCloud size={40} color="#60a5fa" style={{ margin: '0 auto 12px auto' }} />
-            <p style={{ fontWeight: 600, color: '#f1f5f9' }}>
-              {file ? file.name : 'Drag & drop an .eml email file here, or click to browse'}
-            </p>
-            <p style={{ fontSize: '0.8rem', color: '#94a3b8', marginTop: 4 }}>
-              Supports RFC-822 / MIME format raw email files with complete headers
-            </p>
-            <input
-              id="eml-input"
-              type="file"
-              accept=".eml,.txt"
-              style={{ display: 'none' }}
-              onChange={handleFileChange}
-            />
-          </div>
-        ) : (
-          <div>
-            <textarea
-              rows={7}
-              placeholder="Paste raw email content including headers (From, Return-Path, Received:, etc.)..."
-              value={rawText}
-              onChange={(e) => setRawText(e.target.value)}
-              style={{
-                width: '100%',
-                padding: 12,
-                borderRadius: 8,
-                backgroundColor: '#0f172a',
-                border: '1px solid #334155',
-                color: '#e2e8f0',
-                fontSize: '0.875rem'
-              }}
-            />
-          </div>
-        )}
-
-        {error && (
-          <div style={{ marginTop: 12, padding: 10, background: '#450a0a', border: '1px solid #b91c1c', borderRadius: 6, display: 'flex', alignItems: 'center', gap: 8, color: '#fca5a5' }}>
-            <AlertCircle size={18} />
-            <span style={{ fontSize: '0.85rem' }}>{error}</span>
-          </div>
-        )}
-
-        <button
-          type="submit"
-          disabled={loading}
-          style={{
-            marginTop: 16,
-            width: '100%',
-            padding: '12px 20px',
-            backgroundColor: loading ? '#475569' : '#2563eb',
-            color: '#ffffff',
-            border: 'none',
-            borderRadius: 8,
-            fontWeight: 700,
-            fontSize: '1rem',
-            cursor: loading ? 'not-allowed' : 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 8
-          }}
-        >
-          {loading ? (
-            <>
-              <Loader2 className="animate-spin" size={20} />
-              Forensic Inspection in Progress...
-            </>
-          ) : (
-            <>
-              <Send size={18} />
-              Run Full Forensic Pipeline
-            </>
-          )}
-        </button>
-      </form>
     </div>
-  );
+  )
 }
