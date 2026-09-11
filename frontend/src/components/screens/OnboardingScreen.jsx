@@ -2,15 +2,11 @@ import React, { useState } from 'react';
 import {
   Building2,
   Mail,
-  Users,
   CheckCircle2,
   ArrowRight,
   ArrowLeft,
-  Shield,
-  UploadCloud,
   Check,
   KeyRound,
-  Sparkles,
   Plus,
   Trash2,
   Lock,
@@ -144,16 +140,12 @@ export default function OnboardingScreen({ onCompleteOnboarding, onSkip, current
         {/* Progress Header */}
         <div className="flex items-center justify-between pb-6 border-b border-white/10 mb-8">
           <div>
-            <span className="text-[10px] text-redrob-aqua font-bold uppercase tracking-widest flex items-center gap-2">
-              <Shield className="w-3.5 h-3.5 text-blue-400" />
-              Workspace Setup Wizard • Step {step} of 3
-            </span>
-            <h2 className="text-xl sm:text-2xl font-black text-white mt-1">
+            <h2 className="text-xl sm:text-2xl font-black text-white">
               {step === 1
-                ? 'Step 1 — Create or Join Organization'
+                ? 'Create or Join Organization'
                 : step === 2
-                ? 'Step 2 — Connect Mailbox (Optional)'
-                : 'Step 3 — Invite Team Members'}
+                ? 'Connect Mailbox (Optional)'
+                : 'Invite Team Members'}
             </h2>
           </div>
           <div className="flex items-center gap-2">
