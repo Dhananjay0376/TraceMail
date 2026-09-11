@@ -1,0 +1,22 @@
+﻿From: "Security Alert" <alert@paypal-update-security.com>
+To: target.user@enterprise.org
+Subject: URGENT: Account Suspended - Verify Identity Immediately
+Date: Fri, 11 Sep 2026 08:30:00 +0000
+Message-ID: <202609110830.abc12345@vps-frankfurt.hostingnode.de>
+Return-Path: <bounce@bad-actor-relay.net>
+Reply-To: <collector@shadowphish.org>
+Authentication-Results: mx.enterprise.org; spf=fail (sender IP 194.135.25.40 not in domain SPF); dkim=fail header.d=paypal-update-security.com; dmarc=fail
+Received: from mx.enterprise.org (mx.enterprise.org [10.0.0.1]) by mail.enterprise.org with ESMTP; Fri, 11 Sep 2026 08:30:15 +0000
+Received: from relay-node.cleanmail.com (relay-node.cleanmail.com [198.51.100.55]) by mx.enterprise.org with ESMTP; Fri, 11 Sep 2026 08:30:10 +0000
+Received: from vps-frankfurt.hostingnode.de (vps-frankfurt.hostingnode.de [194.135.25.40]) by relay-node.cleanmail.com with ESMTP; Fri, 11 Sep 2026 08:30:02 +0000
+
+Dear Valued Customer,
+
+Your account has been temporarily restricted due to unauthorized login attempts detected from an unrecognized device.
+To avoid permanent suspension and secure your funds, you must verify your identity within 24 hours.
+
+Click the secure link below to confirm your password and billing credentials immediately:
+http://paypal-update-security.com/auth/verify?id=983294823
+
+Sincerely,
+Security & Risk Management Division

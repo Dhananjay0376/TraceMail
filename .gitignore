@@ -1,7 +1,18 @@
-# Python
+# AI Agent Plugins
+get-shit-done/
+coderabbit/
+ralph-loop/
+gsd/
+code-rabbit/
+ralph/
+plugins/
+.plugins/
+
+# Python & Virtual Environments
 __pycache__/
 *.py[cod]
 *$py.class
+*.class
 .venv/
 venv/
 env/
@@ -27,14 +38,21 @@ model/*.pt
 model/*.safetensors
 model/distilbert/*
 !model/distilbert/.gitkeep
+Model/*.pkl
+results/
 
 # Node / Frontend
 frontend/node_modules/
 frontend/dist/
 frontend/.env
 frontend/.env.local
+*.local
 
-# IDE
+# OS / IDE Artifacts
+.DS_Store
+Thumbs.db
 .vscode/
 .idea/
 *.swp
+*.db
+
