@@ -38,3 +38,7 @@ frontend/.env.local
 .vscode/
 .idea/
 *.swp
+
+# Plugins & Local Agents
+plugins/
+.agents/
