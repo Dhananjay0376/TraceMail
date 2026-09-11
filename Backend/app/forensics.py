@@ -175,8 +175,11 @@ def verify_dkim_signature(raw_bytes: bytes) -> Dict[str, Any]:
         }
 
 
-def parse_authentication_results(auth_headers: List[str]) -> Dict[str, Any]:
-    """Extract SPF, DKIM, and DMARC verdicts from Authentication-Results headers."""
+def parse_authentication_results(auth_headers: List[str], sender_domain: str = "") -> Dict[str, Any]:
+    """
+    Extract SPF, DKIM, and DMARC verdicts from Authentication-Results headers.
+    If headers are missing, optionally uses checkdmarc to check live domain DNS policy.
+    """
     combined = " ".join(auth_headers).lower()
     
     spf_status = "none"
@@ -200,6 +203,26 @@ def parse_authentication_results(auth_headers: List[str]) -> Dict[str, Any]:
         dmarc_status = "pass"
     elif "dmarc=fail" in combined:
         dmarc_status = "fail"
+
+    # Fallback to checkdmarc live DNS query if headers are absent and domain is provided
+    if spf_status == "none" and dmarc_status == "none" and sender_domain and "." in sender_domain:
+        try:
+            import checkdmarc
+            results = checkdmarc.check_domains([sender_domain], park_mode=False)
+            dmarc_info = results.get("dmarc", {})
+            spf_info = results.get("spf", {})
+            
+            if dmarc_info.get("valid"):
+                dmarc_status = "pass"
+            elif dmarc_info.get("error"):
+                dmarc_status = "fail"
+
+            if spf_info.get("valid"):
+                spf_status = "pass"
+            elif spf_info.get("error"):
+                spf_status = "fail"
+        except Exception as e:
+            logger.debug(f"checkdmarc fallback query for {sender_domain} skipped/failed: {e}")
         
     return {
         "spf_status": spf_status,
@@ -279,9 +302,12 @@ def parse_eml_bytes(raw_bytes: bytes) -> Dict[str, Any]:
     # Reconstruct relay path
     hops, earliest_origin_ip = extract_relay_hops(received_headers)
     
+    # Extract sender domain for authentication resolution
+    sender_domain = parsed_addr.split("@")[-1].lower() if "@" in parsed_addr else ""
+
     # Protocol verification
     dkim_result = verify_dkim_signature(raw_bytes)
-    auth_results = parse_authentication_results(auth_headers)
+    auth_results = parse_authentication_results(auth_headers, sender_domain=sender_domain)
     
     # If dkim verification via dkimpy passes, ensure dkim_status reflects it
     if dkim_result["status"] == "pass":
