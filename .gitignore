@@ -1,0 +1,40 @@
+﻿# AI Agent Plugins
+get-shit-done/
+coderabbit/
+ralph-loop/
+gsd/
+code-rabbit/
+ralph/
+plugins/
+.plugins/
+
+# Python & Virtual Environments
+__pycache__/
+*.py[cod]
+*.class
+.venv/
+venv/
+env/
+*.env
+!.env.example
+
+# Node / Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.env
+*.local
+
+# Datasets & Large Models (Keep only sample .eml files in git)
+data/raw/*
+!data/raw/.gitkeep
+model/*.bin
+model/*.pt
+model/*.safetensors
+results/
+
+# OS / IDE Artifacts
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.log
