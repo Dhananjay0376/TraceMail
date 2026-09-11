@@ -1,0 +1,26 @@
+From: "Deepa Nair" <deepa.nair@corporate-apex.in>
+To: "Engineering Team" <dev-all@corporate-apex.in>
+Subject: Minutes of Quarterly Product Strategy Review
+Date: Wed, 09 Sep 2026 10:15:00 +0000
+Message-ID: <apex-prod-202609091015@corporate-apex.in>
+Return-Path: <deepa.nair@corporate-apex.in>
+Reply-To: <deepa.nair@corporate-apex.in>
+MIME-Version: 1.0
+Content-Type: text/plain; charset="utf-8"
+Received: from mail.corporate-apex.in ([103.21.244.15]) by internal-mail.corporate-apex.in with ESMTP id 11029; Wed, 09 Sep 2026 10:15:30 +0000
+Received: from client-vpn.corporate-apex.in ([103.21.244.88]) by mail.corporate-apex.in with ESMTPSA id 99312; Wed, 09 Sep 2026 10:15:05 +0000
+Authentication-Results: mail.corporate-apex.in; spf=pass (sender IP 103.21.244.88 is authorized); dkim=pass header.d=corporate-apex.in; dmarc=pass
+
+Hi Team,
+
+Please find attached the summary notes and slide deck from today's quarterly strategy review meeting.
+
+Overall sprint goals are on schedule and the release candidate branch will be locked next Monday for final QA.
+Please check the Jira board to verify your assigned work packages.
+
+Let me know if you have any questions or blockers before our next standup.
+
+Best regards,
+Deepa Nair
+Engineering Manager
+Corporate Apex Ltd

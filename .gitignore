@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+*.env
+!.env.example
+*.log
+
+# Caches & temporary files
+.pytest_cache/
+.coverage
+htmlcov/
+*.sqlite3
+d:\tmp/
+tmp/
+
+# Data & Models
+data/raw/*
+!data/raw/.gitkeep
+data/cache/*
+!data/cache/.gitkeep
+model/*.bin
+model/*.pt
+model/*.safetensors
+model/distilbert/*
+!model/distilbert/.gitkeep
+
+# Node / Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.env
+frontend/.env.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
