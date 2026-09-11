@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   ShieldAlert,
   Menu,
@@ -24,6 +24,20 @@ export default function Navbar({
   currentUser,
 }) {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 10) {
+        setIsScrolled(true);
+      } else {
+        setIsScrolled(false);
+      }
+    };
+    handleScroll();
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const screenLabels = {
     landing: 'Platform Overview',
@@ -44,7 +58,17 @@ export default function Navbar({
   const activeLabel = screenLabels[currentScreen] || 'Forensic Platform';
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-white/10 bg-[#050814]/80 backdrop-blur-xl transition-colors">
+    <header
+      className={`fixed top-0 left-0 right-0 z-50 w-full transition-all duration-300 border-b ${
+        isScrolled
+          ? 'bg-[#050814]/35 border-white/10 shadow-xl shadow-black/60'
+          : 'bg-[#050814]/90 border-white/10'
+      }`}
+      style={{
+        backdropFilter: isScrolled ? 'blur(16px)' : 'blur(24px)',
+        WebkitBackdropFilter: isScrolled ? 'blur(16px)' : 'blur(24px)',
+      }}
+    >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Left: Main Menu Trigger & Redrob-Styled Brand Logo */}
@@ -52,7 +76,7 @@ export default function Navbar({
             {/* Main Menu Toggle Pill Button */}
             <button
               onClick={onToggleSidebar}
-              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-full transition-all cursor-pointer border text-xs font-mono font-bold uppercase tracking-wider spring-hover ${
+              className={`flex items-center gap-2 px-3 py-1 rounded-full transition-all cursor-pointer border text-[10px] font-mono font-bold uppercase tracking-wider spring-hover ${
                 isSidebarOpen
                   ? 'bg-redrob-blue/20 text-white border-redrob-blue/50 shadow-redrob-glow'
                   : 'bg-[#0b1026] text-slate-300 border-white/10 hover:border-redrob-blue/40 hover:text-white hover:bg-[#0f1738]'
@@ -61,7 +85,7 @@ export default function Navbar({
               aria-label="Toggle Main Menu"
             >
               <Menu
-                className={`w-4 h-4 text-redrob-aqua transition-transform duration-300 ${
+                className={`w-3.5 h-3.5 text-redrob-aqua transition-transform duration-300 ${
                   isSidebarOpen ? 'rotate-90 text-white' : ''
                 }`}
               />
@@ -73,21 +97,21 @@ export default function Navbar({
               onClick={() => onNavigate('landing')}
               className="flex items-center gap-2.5 group cursor-pointer text-left"
             >
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-redrob-blue via-[#3385ff] to-redrob-violet p-0.5 shadow-lg shadow-redrob-blue/20 group-hover:scale-105 transition-all">
+              <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-redrob-blue via-[#3385ff] to-redrob-violet p-0.5 shadow-lg shadow-redrob-blue/20 group-hover:scale-105 transition-all">
                 <div className="w-full h-full bg-[#050814] rounded-[10px] flex items-center justify-center">
-                  <ShieldAlert className="w-4.5 h-4.5 text-redrob-aqua group-hover:text-white transition-all" />
+                  <ShieldAlert className="w-4 h-4 text-redrob-aqua group-hover:text-white transition-all" />
                 </div>
               </div>
               <div>
                 <div className="flex items-center gap-1.5">
-                  <span className="font-extrabold tracking-tight text-base sm:text-lg text-white">
+                  <span className="font-extrabold tracking-tight text-sm sm:text-base text-white">
                     Trace<span className="text-transparent bg-clip-text bg-gradient-to-r from-redrob-blue to-redrob-aqua">Mail</span>
                   </span>
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-redrob-blue/15 border border-redrob-blue/30 text-redrob-blue font-bold">
+                  <span className="text-[9px] font-mono px-1.5 py-0.5 rounded-full bg-redrob-blue/15 border border-redrob-blue/30 text-redrob-blue font-bold">
                     v2.0
                   </span>
                 </div>
-                <p className="text-[10px] text-slate-400 font-sans hidden md:block">
+                <p className="text-[9px] text-slate-400 font-sans hidden md:block">
                   AI Forensic Intelligence
                 </p>
               </div>
@@ -95,8 +119,8 @@ export default function Navbar({
           </div>
 
           {/* Center: Active View Breadcrumb Pill */}
-          <div className="hidden md:flex items-center gap-2 font-mono text-xs text-slate-400 bg-[#0b1026]/90 px-4 py-1.5 rounded-full border border-white/10 shadow-sm">
-            <span className="w-2 h-2 rounded-full bg-redrob-aqua animate-pulse" />
+          <div className="hidden md:flex items-center gap-2 font-mono text-[11px] text-slate-400 bg-[#0b1026]/90 px-3 py-1 rounded-full border border-white/10 shadow-sm">
+            <span className="w-1.5 h-1.5 rounded-full bg-redrob-aqua animate-pulse" />
             <span className="text-slate-400">View:</span>
             <span className="text-white font-bold tracking-wide">
               {activeLabel}
@@ -106,10 +130,10 @@ export default function Navbar({
           {/* Right Action Area: Role Switcher, Quick Submit, Alerts, User Profile */}
           <div className="flex items-center gap-2 sm:gap-3">
             {/* Role Switcher Pill Bar (Crucial for Demo!) */}
-            <div className="flex items-center p-1 rounded-full bg-[#0b1026] border border-white/10">
+            <div className="flex items-center p-0.5 rounded-full bg-[#0b1026] border border-white/10">
               <button
                 onClick={() => onRoleChange('employee')}
-                className={`px-3 py-1 rounded-full text-[11px] font-sans font-bold transition-all cursor-pointer ${
+                className={`px-2.5 py-0.5 rounded-full text-[10px] font-sans font-bold transition-all cursor-pointer ${
                   currentRole === 'employee'
                     ? 'bg-redrob-lime text-slate-950 shadow font-extrabold'
                     : 'text-slate-400 hover:text-white'
@@ -120,7 +144,7 @@ export default function Navbar({
               </button>
               <button
                 onClick={() => onRoleChange('analyst')}
-                className={`px-3 py-1 rounded-full text-[11px] font-sans font-bold transition-all cursor-pointer ${
+                className={`px-2.5 py-0.5 rounded-full text-[10px] font-sans font-bold transition-all cursor-pointer ${
                   currentRole === 'analyst'
                     ? 'bg-redrob-blue text-white shadow font-extrabold'
                     : 'text-slate-400 hover:text-white'
@@ -131,7 +155,7 @@ export default function Navbar({
               </button>
               <button
                 onClick={() => onRoleChange('admin')}
-                className={`px-3 py-1 rounded-full text-[11px] font-sans font-bold transition-all cursor-pointer ${
+                className={`px-2.5 py-0.5 rounded-full text-[10px] font-sans font-bold transition-all cursor-pointer ${
                   currentRole === 'admin'
                     ? 'bg-redrob-violet text-white shadow font-extrabold'
                     : 'text-slate-400 hover:text-white'
@@ -146,12 +170,12 @@ export default function Navbar({
             {currentRole !== 'employee' && (
               <button
                 onClick={() => onNavigate('alerts')}
-                className="relative p-2 rounded-full border border-white/10 hover:border-redrob-blue/40 bg-[#0b1026] hover:text-white text-slate-300 transition-all cursor-pointer spring-hover"
+                className="relative p-1.5 rounded-full border border-white/10 hover:border-redrob-blue/40 bg-[#0b1026] hover:text-white text-slate-300 transition-all cursor-pointer spring-hover"
                 title="View Alerts Center"
               >
-                <Bell className="w-4 h-4" />
+                <Bell className="w-3.5 h-3.5" />
                 {unreadAlertsCount > 0 && (
-                  <span className="absolute -top-1 -right-1 w-4.5 h-4.5 rounded-full bg-redrob-coral text-white text-[9px] font-mono font-bold flex items-center justify-center shadow">
+                  <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-redrob-coral text-white text-[8px] font-mono font-bold flex items-center justify-center shadow">
                     {unreadAlertsCount}
                   </span>
                 )}
@@ -161,9 +185,9 @@ export default function Navbar({
             {/* Quick Upload CTA with Redrob Blue */}
             <button
               onClick={onOpenSubmit}
-              className="hidden sm:flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-redrob-blue to-[#1d3fe8] hover:shadow-redrob-glow text-white font-bold text-xs font-mono uppercase tracking-wider transition-all cursor-pointer spring-hover"
+              className="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-redrob-blue to-[#1d3fe8] hover:shadow-redrob-glow text-white font-bold text-[10px] font-mono uppercase tracking-wider transition-all cursor-pointer spring-hover"
             >
-              <UploadCloud className="w-3.5 h-3.5" />
+              <UploadCloud className="w-3 h-3" />
               <span>+ Scan</span>
             </button>
 

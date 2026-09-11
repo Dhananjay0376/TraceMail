@@ -296,7 +296,7 @@ export default function App() {
         currentUser={currentUser}
       />
 
-      <div className="flex-1 flex relative z-10">
+      <div className="flex-1 flex relative z-10 pt-16">
         {/* Left-Hand Side Navigation Sidebar (Shifted clickable options) */}
         <Sidebar
           isOpen={isSidebarOpen}

@@ -1,7 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "https://mexawvaenkiaikdbaxnz.supabase.co";
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || "";
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFub24iLCJyb2xlIjoiYW5vbiIsImlhdCI6MTcwMDAwMDAwMCwiZXhwIjoyMDE3ODc2ODAwfQ.placeholder";
 const RESEND_API_KEY = import.meta.env.VITE_RESEND_API_KEY || "";
 const RESEND_FROM = import.meta.env.VITE_RESEND_FROM || "onboarding@resend.dev";
 
@@ -123,24 +123,34 @@ export async function signInWithGoogle() {
 }
 
 export async function getCurrentSession() {
-  const { data } = await supabase.auth.getSession();
-  return data?.session || null;
+  try {
+    const { data } = await supabase.auth.getSession();
+    return data?.session || null;
+  } catch (err) {
+    console.warn("Supabase getCurrentSession fallback:", err);
+    return null;
+  }
 }
 
 export async function getCurrentUser() {
-  const { data } = await supabase.auth.getUser();
-  if (!data.user) return null;
-  const meta = data.user.user_metadata || {};
-  const userName = meta.full_name || meta.name || data.user.email?.split("@")[0] || "Analyst";
-  return {
-    id: data.user.id,
-    email: data.user.email,
-    name: userName,
-    org: meta.organization || "",
-    role: meta.role || "analyst",
-    avatar: getAvatarUrl(meta, data.user.email, userName),
-    isFirstTime: false,
-  };
+  try {
+    const { data } = await supabase.auth.getUser();
+    if (!data?.user) return null;
+    const meta = data.user.user_metadata || {};
+    const userName = meta.full_name || meta.name || data.user.email?.split("@")[0] || "Analyst";
+    return {
+      id: data.user.id,
+      email: data.user.email,
+      name: userName,
+      org: meta.organization || "",
+      role: meta.role || "analyst",
+      avatar: getAvatarUrl(meta, data.user.email, userName),
+      isFirstTime: false,
+    };
+  } catch (err) {
+    console.warn("Supabase getCurrentUser fallback:", err);
+    return null;
+  }
 }
 
 export async function sendPasswordReset({ email }) {

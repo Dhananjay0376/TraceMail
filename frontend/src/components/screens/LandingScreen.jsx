@@ -307,9 +307,9 @@ export default function LandingScreen({
 
           {/* Main headline — massive editorial typography */}
           <div className="flex-1 flex flex-col justify-center">
-            <h1 className="text-5xl sm:text-7xl lg:text-[88px] font-extrabold text-white leading-[1.05] tracking-tight mb-4">
+            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold text-white leading-[1.1] tracking-tight mb-4">
               {slide.headline}
-              <span className="block font-serif italic font-light text-white/70 mt-2">
+              <span className="block font-serif italic font-light text-white/70 mt-2 text-2xl sm:text-4xl lg:text-5xl">
                 {slide.sub}
               </span>
             </h1>
@@ -421,18 +421,45 @@ export default function LandingScreen({
       </div>
 
       {/* ════════════════════════════════════════════════════════════
-          SECTION 2 · TRUST BANNER — White
+          SECTION 2 · TRUST BANNER — Horizontal Straight Loop
       ════════════════════════════════════════════════════════════ */}
-      <section className="bg-white py-16 border-b border-gray-100">
-        <div className="max-w-6xl mx-auto px-6 lg:px-8 text-center">
-          <p className="text-gray-500 text-base font-sans mb-10">
+      <section className="bg-white py-16 border-b border-gray-100 overflow-hidden">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8 text-center mb-8">
+          <p className="text-gray-500 text-base font-sans">
             Trusted by Organizations. Built for Cyber Defenders.
           </p>
-          <div className="flex flex-wrap items-center justify-center gap-10 lg:gap-16 opacity-40 grayscale">
-            {['Accenture', 'Deloitte', 'IBM Security', 'Cisco', 'PwC', 'KPMG', 'CrowdStrike'].map((name) => (
-              <span key={name} className="text-gray-800 font-bold text-lg tracking-tight">
-                {name}
-              </span>
+        </div>
+        <div className="w-full overflow-hidden marquee-mask">
+          <div className="flex w-max animate-marquee hover:[animation-play-state:paused] gap-12 sm:gap-16 items-center py-2">
+            {[
+              'Accenture',
+              'Deloitte',
+              'IBM Security',
+              'Cisco',
+              'PwC',
+              'KPMG',
+              'CrowdStrike',
+              'Accenture',
+              'Deloitte',
+              'IBM Security',
+              'Cisco',
+              'PwC',
+              'KPMG',
+              'CrowdStrike',
+              'Accenture',
+              'Deloitte',
+              'IBM Security',
+              'Cisco',
+              'PwC',
+              'KPMG',
+              'CrowdStrike',
+            ].map((name, idx) => (
+              <div key={idx} className="flex items-center gap-12 sm:gap-16 shrink-0 opacity-70 hover:opacity-100 transition-opacity cursor-default">
+                <span className="text-gray-900 font-bold text-xl sm:text-2xl tracking-tight font-sans">
+                  {name}
+                </span>
+                <span className="w-2 h-2 rounded-full bg-blue-500/40" />
+              </div>
             ))}
           </div>
         </div>
