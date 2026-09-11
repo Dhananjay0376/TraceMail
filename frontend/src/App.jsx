@@ -90,7 +90,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#050814] text-slate-100 flex flex-col font-sans relative overflow-x-hidden">
+    <div className="min-h-screen bg-[#050814] text-slate-100 flex flex-col font-sans relative">
       {/* Redrob Ambient Lighting Aura & Tech Grid */}
       <AmbientAura />
 
@@ -107,7 +107,7 @@ export default function App() {
         onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
       />
 
-      <div className="flex-1 flex relative z-10">
+      <div className="flex-1 flex relative z-10 pt-16">
         {/* Left-Hand Side Navigation Sidebar (Shifted clickable options) */}
         <Sidebar
           isOpen={isSidebarOpen}
