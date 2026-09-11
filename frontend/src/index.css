@@ -1,0 +1,60 @@
+﻿@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: #0b0f19;
+  color: #e2e8f0;
+  min-height: 100vh;
+}
+
+code, pre {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.container {
+  max-width: 1380px;
+  margin: 0 auto;
+  padding: 24px 16px;
+}
+
+.card {
+  background: #131b2e;
+  border: 1px solid #222f4c;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.badge-green { background: #064e3b; color: #34d399; border: 1px solid #059669; }
+.badge-amber { background: #78350f; color: #fbbf24; border: 1px solid #d97706; }
+.badge-red { background: #7f1d1d; color: #f87171; border: 1px solid #dc2626; }
+.badge-blue { background: #1e3a8a; color: #60a5fa; border: 1px solid #2563eb; }
+
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+@media (max-width: 900px) {
+  .grid-2 {
+    grid-template-columns: 1fr;
+  }
+}

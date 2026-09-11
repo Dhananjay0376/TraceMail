@@ -1,7 +1,18 @@
-# Python
+# AI Agent Plugins & Local Agents
+plugins/
+.plugins/
+.agents/
+get-shit-done/
+coderabbit/
+ralph-loop/
+gsd/
+code-rabbit/
+ralph/
+
+# Python & Virtual Environments
 __pycache__/
 *.py[cod]
-*$py.class
+*.class
 .venv/
 venv/
 env/
@@ -14,10 +25,10 @@ env/
 .coverage
 htmlcov/
 *.sqlite3
-d:\tmp/
+*.db
 tmp/
 
-# Data & Models
+# Datasets & Large Models (Keep only sample .eml files in git)
 data/raw/*
 !data/raw/.gitkeep
 data/cache/*
@@ -27,18 +38,18 @@ model/*.pt
 model/*.safetensors
 model/distilbert/*
 !model/distilbert/.gitkeep
+results/
 
 # Node / Frontend
 frontend/node_modules/
 frontend/dist/
 frontend/.env
 frontend/.env.local
+*.local
 
-# IDE
+# OS / IDE Artifacts
+.DS_Store
+Thumbs.db
 .vscode/
 .idea/
 *.swp
-
-# Plugins & Local Agents
-plugins/
-.agents/
