@@ -19,7 +19,6 @@ const ScrollStack = ({
   rotationAmount = 0,
   blurAmount = 2,
   useWindowScroll = false,
-  maxUnlockedIndex,
   onStackComplete
 }) => {
   const scrollerRef = useRef(null);
@@ -81,21 +80,6 @@ const ScrollStack = ({
     const { scrollTop, containerHeight } = getScrollData();
     const stackPositionPx = parsePercentage(stackPosition, containerHeight);
     const scaleEndPositionPx = parsePercentage(scaleEndPosition, containerHeight);
-
-    // Enforce maximum unlocked card scroll boundary if maxUnlockedIndex is provided
-    if (maxUnlockedIndex !== undefined && cardsRef.current.length > maxUnlockedIndex + 1) {
-      const lockedCardIndex = maxUnlockedIndex + 1;
-      const lockedCard = cardsRef.current[lockedCardIndex];
-      if (lockedCard) {
-        const lockedCardTop = getElementOffset(lockedCard);
-        const maxScrollAllowed = lockedCardTop - stackPositionPx - itemStackDistance * lockedCardIndex;
-        if (scrollTop > maxScrollAllowed) {
-          if (!useWindowScroll && scrollerRef.current) {
-            scrollerRef.current.scrollTop = maxScrollAllowed;
-          }
-        }
-      }
-    }
 
     const endElement = useWindowScroll
       ? document.querySelector('.scroll-stack-end')
@@ -189,7 +173,6 @@ const ScrollStack = ({
     rotationAmount,
     blurAmount,
     useWindowScroll,
-    maxUnlockedIndex,
     onStackComplete,
     calculateProgress,
     parsePercentage,
@@ -313,7 +296,6 @@ const ScrollStack = ({
     rotationAmount,
     blurAmount,
     useWindowScroll,
-    maxUnlockedIndex,
     onStackComplete,
     setupLenis,
     updateCardTransforms
