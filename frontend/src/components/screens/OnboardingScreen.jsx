@@ -266,9 +266,6 @@ export default function OnboardingScreen({ onCompleteOnboarding, onSkip, current
                       !domain.trim() ? 'border-amber-500/40 focus:border-amber-400' : 'border-emerald-500/40 focus:border-emerald-400'
                     }`}
                   />
-                  <p className="text-[11px] text-slate-400 mt-1 font-mono">
-                    Used for automated DMARC validation, lookalike typo detection, and VIP impersonation checks.
-                  </p>
                 </div>
               </div>
             ) : (
