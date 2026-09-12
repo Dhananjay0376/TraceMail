@@ -380,7 +380,7 @@ export default function OnboardingScreen({ onCompleteOnboarding, onSkip, current
                 type="email"
                 value={newEmailInput}
                 onChange={(e) => setNewEmailInput(e.target.value)}
-                placeholder=""
+                placeholder="Enter Gmail address"
                 className="flex-1 px-4 py-2.5 rounded-xl bg-[#050814] border border-white/10 text-white placeholder-slate-500 focus:border-redrob-blue focus:outline-none text-xs font-mono"
               />
               <select
