@@ -1,24 +1,26 @@
-﻿import React, { useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Polyline, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import { Globe2, AlertOctagon, Server, Navigation } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
 
-// Custom Pin Marker Factory
+// Custom Tactical Red Location Pin Marker Factory
 const createPin = (color, label) => {
+  const pinColor = color || '#ef4444';
   return L.divIcon({
     className: 'custom-map-pin',
     html: `
-      <div style="display: flex; flex-direction: column; align-items: center; cursor: pointer;">
-        <div style="background-color: ${color}; width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid #ffffff; box-shadow: 0 0 12px ${color}; color: #000; font-weight: 800; font-size: 11px; font-family: monospace;">
+      <div style="position: relative; display: flex; flex-direction: column; align-items: center; cursor: pointer;">
+        <div style="position: absolute; top: -5px; width: 36px; height: 36px; border-radius: 50%; background: ${pinColor}; opacity: 0.4; animation: ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;"></div>
+        <div style="background: linear-gradient(135deg, ${pinColor}, #991b1b); width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid #ffffff; box-shadow: 0 0 16px ${pinColor}; color: #ffffff; font-weight: 800; font-size: 11px; font-family: monospace; z-index: 10;">
           ${label}
         </div>
-        <div style="width: 2px; height: 6px; background-color: ${color};"></div>
+        <div style="width: 3px; height: 10px; background-color: ${pinColor}; box-shadow: 0 0 8px ${pinColor}; z-index: 9;"></div>
       </div>
     `,
-    iconSize: [26, 32],
-    iconAnchor: [13, 32],
-    popupAnchor: [0, -32],
+    iconSize: [36, 42],
+    iconAnchor: [18, 42],
+    popupAnchor: [0, -42],
   });
 };
 

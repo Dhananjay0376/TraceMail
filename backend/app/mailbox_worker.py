@@ -321,7 +321,7 @@ async def poll_all_monitored_mailboxes():
                         logger.warning(f"No refresh_token available for {email}. Skipping — re-auth required.")
                         continue
 
-                service = build("gmail", "v1", credentials=creds)
+                service = build("gmail", "v1", credentials=creds, cache_discovery=False)
                 results = service.users().messages().list(userId='me', q='is:unread', maxResults=10).execute()
                 messages = results.get('messages', [])
 

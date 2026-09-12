@@ -18,11 +18,12 @@ MODEL_DIR = os.path.join(BASE_DIR, "Model")
 BASELINE_MODEL_PATH = os.path.join(MODEL_DIR, "baseline_model.pkl")
 BASELINE_VEC_PATH = os.path.join(MODEL_DIR, "baseline_vectorizer.pkl")
 
-HF_MODEL_NAME = os.getenv("HF_MODEL_NAME", "Dhananjay-N/tracemail-distilbert-phishing-v2")
+HF_MODEL_NAME = os.getenv("HF_MODEL_NAME", "ANMOLGOLA/TraceMail-DistilBERT-3Class")
 
 # Global singleton storage
 _baseline_model = None
 _baseline_vectorizer = None
+_baseline_attempted = False
 _transformer_pipeline = None
 _transformer_attempted = False
 
@@ -57,8 +58,9 @@ SUSPICIOUS_URL_PATTERNS = [
 
 def load_baseline():
     """Load local TF-IDF vectorizer and Logistic Regression baseline."""
-    global _baseline_model, _baseline_vectorizer
-    if _baseline_model is None or _baseline_vectorizer is None:
+    global _baseline_model, _baseline_vectorizer, _baseline_attempted
+    if (_baseline_model is None or _baseline_vectorizer is None) and not _baseline_attempted:
+        _baseline_attempted = True
         if os.path.exists(BASELINE_MODEL_PATH) and os.path.exists(BASELINE_VEC_PATH):
             try:
                 _baseline_model = joblib.load(BASELINE_MODEL_PATH)
@@ -67,7 +69,7 @@ def load_baseline():
             except Exception as e:
                 logger.error(f"Failed loading baseline model: {e}")
         else:
-            logger.warning(f"Baseline files not found at {BASELINE_MODEL_PATH}")
+            logger.warning(f"Baseline files not found at {BASELINE_MODEL_PATH} (falling back to Heuristic Threat Engine)")
     return _baseline_model, _baseline_vectorizer
 
 

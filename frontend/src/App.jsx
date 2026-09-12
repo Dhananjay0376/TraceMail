@@ -73,9 +73,9 @@ export default function App() {
 
   const [currentScreen, setCurrentScreen] = useState(getInitialScreen);
   const [currentRole, setCurrentRole] = useState('analyst');
-  const [currentUser, setCurrentUser] = useState(null); // null = not logged in (shows Login/Signup in Navbar)
-  const [cases, setCases] = useState([]);
-  const [alerts, setAlerts] = useState([]);
+  const [currentUser, setCurrentUser] = useState(DEMO_USER); // Default to DEMO_USER for demo/sample mode
+  const [cases, setCases] = useState(MOCK_CASES);
+  const [alerts, setAlerts] = useState(MOCK_ALERTS);
   const [selectedSample, setSelectedSample] = useState(MOCK_SAMPLES[0]);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [authMode, setAuthMode] = useState('login');
@@ -123,17 +123,11 @@ export default function App() {
 
   // Helper to load user profile and data
   const loadUserData = (user) => {
-    if (!user) {
-      setCurrentUser(null);
-      setCases([]);
-      setAlerts([]);
-      setUnreadAlerts(0);
-      return;
-    }
-    setCurrentUser(user);
-    if (user.role) setCurrentRole(user.role);
+    const activeUser = user || DEMO_USER;
+    setCurrentUser(activeUser);
+    if (activeUser.role) setCurrentRole(activeUser.role);
 
-    if (user.isDemo) {
+    if (activeUser.isDemo || !user) {
       setCases(MOCK_CASES);
       setAlerts(MOCK_ALERTS);
       setUnreadAlerts(3);

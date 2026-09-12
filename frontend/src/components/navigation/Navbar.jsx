@@ -7,6 +7,7 @@ import {
   ChevronDown,
   ExternalLink,
   Menu,
+  LayoutDashboard,
 } from 'lucide-react';
 import CardNav from './CardNav';
 
@@ -170,6 +171,18 @@ export default function Navbar({
           </div>
 
           <div className="py-1">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onNavigate('dashboard');
+                setIsUserMenuOpen(false);
+              }}
+              className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-slate-300 hover:text-white hover:bg-white/10 transition-all text-left cursor-pointer"
+            >
+              <LayoutDashboard className="w-4 h-4 text-slate-400" />
+              <span>Dashboard</span>
+            </button>
             {/* Alerts inside profile dropdown */}
             <button
               type="button"

@@ -17,7 +17,7 @@ import StatCard from '../common/StatCard';
 import RiskBadge from '../common/RiskBadge';
 import MiniWorldMap from '../map/MiniWorldMap';
 import MagicBento from '../vfx/MagicBento';
-import { MOCK_STATS, MOCK_ALERTS } from '../../mock/mockData';
+import { MOCK_STATS, MOCK_ALERTS, MOCK_ATTACK_ORIGINS } from '../../mock/mockData';
 
 export default function DashboardScreen({
   currentRole = 'analyst',
@@ -32,19 +32,19 @@ export default function DashboardScreen({
   onToggleSidebar,
 }) {
   const isEmployee = currentRole === 'employee';
-  const isDemo = currentUser?.isDemo ?? false;
-  const [showEmptyState, setShowEmptyState] = useState(isFirstTime && cases.length === 0);
+  const isDemo = currentUser ? (currentUser.isDemo ?? false) : true;
+  const [showEmptyState, setShowEmptyState] = useState(!isDemo && isFirstTime && cases.length === 0);
 
-  // Dynamic telemetry calculations based on session (Demo vs Real User)
-  const statTotalScanned = isDemo ? MOCK_STATS.totalScanned.toLocaleString() : (cases.length > 0 ? (cases.length * 2).toString() : '0');
-  const statScannedGrowth = isDemo ? MOCK_STATS.scannedGrowth : (cases.length > 0 ? '+1 new' : '0 new this week');
+  const safeCases = Array.isArray(cases) ? cases : [];
+  const statTotalScanned = isDemo ? MOCK_STATS.totalScanned.toLocaleString() : (safeCases.length > 0 ? (safeCases.length * 2).toString() : '0');
+  const statScannedGrowth = isDemo ? MOCK_STATS.scannedGrowth : (safeCases.length > 0 ? '+1 new' : '0 new this week');
   const statCleanRate = isDemo ? MOCK_STATS.cleanRate : '100%';
-  const statHighRisk = isDemo ? MOCK_STATS.highRiskCount : cases.filter(c => c.severity === 'critical' || c.severity === 'high').length;
+  const statHighRisk = isDemo ? MOCK_STATS.highRiskCount : safeCases.filter(c => c && (c.severity === 'critical' || c.severity === 'high' || c.risk_level === 'High')).length;
   const statHighRiskGrowth = isDemo ? MOCK_STATS.highRiskGrowth : '0 new';
-  const statActiveCases = isDemo ? (cases.length || MOCK_STATS.activeCases) : cases.length;
-  const statCasesGrowth = isDemo ? MOCK_STATS.casesGrowth : (cases.length > 0 ? `${cases.length} in queue` : '0 active');
-  const statAvgResponseTime = isDemo ? MOCK_STATS.avgResponseTime : (cases.length > 0 ? '1.2 min' : '0.0 min');
-  const displayAlerts = isDemo ? alerts : alerts;
+  const statActiveCases = isDemo ? (safeCases.length || MOCK_STATS.activeCases) : safeCases.length;
+  const statCasesGrowth = isDemo ? MOCK_STATS.casesGrowth : (safeCases.length > 0 ? `${safeCases.length} in queue` : '0 active');
+  const statAvgResponseTime = isDemo ? MOCK_STATS.avgResponseTime : (safeCases.length > 0 ? '1.2 min' : '0.0 min');
+  const displayAlerts = (Array.isArray(alerts) && alerts.length > 0) ? alerts : MOCK_ALERTS;
 
   // Decorative 3D Paper Cut Organic Wave Header Background
   const PaperCutHeader = () => (
