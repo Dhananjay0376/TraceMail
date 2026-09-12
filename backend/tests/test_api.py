@@ -4,10 +4,41 @@ from app.main import app
 
 client = TestClient(app)
 
+from app.services.tfidf_predictor import get_tfidf_predictor
+from app.services.distilbert_predictor import get_distilbert_predictor
+
+get_tfidf_predictor().load()
+get_distilbert_predictor().load()
+
 def test_health():
     resp = client.get("/health")
     assert resp.status_code == 200
     assert resp.json()["status"] == "healthy"
+
+def test_predict_phishing():
+    payload = {"email_text": "URGENT: Your account has been suspended! Please click here to login and verify your banking details immediately."}
+    resp = client.post("/predict", json=payload)
+    assert resp.status_code == 200
+    data = resp.json()
+    assert "models" in data
+    assert "tfidf" in data["models"]
+    assert "distilbert" in data["models"]
+    assert "nlp_analysis" in data
+    assert data["models"]["tfidf"]["predicted_label"] == "phishing"
+    assert data["models"]["tfidf"]["confidence"] > 0.5
+
+def test_predict_legitimate():
+    payload = {"email_text": "Hi team, please find attached the weekly sync agenda and meeting notes for Monday."}
+    resp = client.post("/predict", json=payload)
+    assert resp.status_code == 200
+    data = resp.json()
+    assert "models" in data
+    assert "tfidf" in data["models"]
+    assert "distilbert" in data["models"]
+    assert "nlp_analysis" in data
+    assert data["models"]["tfidf"]["predicted_label"] == "legitimate"
+    assert data["models"]["tfidf"]["confidence"] > 0.5
+    assert data["nlp_analysis"]["final_label"] == "legitimate"
 
 def test_classify_phishing():
     payload = {"text": "URGENT: Your bank account will be suspended in 24 hours. Verify your account immediately."}

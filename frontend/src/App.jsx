@@ -18,7 +18,7 @@ import DocumentationScreen from './components/screens/DocumentationScreen';
 import LogoutModal from './components/screens/LogoutModal';
 import NotFoundScreen from './components/screens/NotFoundScreen';
 import AmbientAura from './components/vfx/AmbientAura';
-import { MOCK_SAMPLES, MOCK_CASES, MOCK_ALERTS } from './mock/mockData';
+import { MOCK_SAMPLES, MOCK_CASES, MOCK_ALERTS, DEMO_USER, Demo_User } from './mock/mockData';
 import { CheckCircle2, X } from 'lucide-react';
 import { supabase, getCurrentUser, signOutUser, toTraceMailUser } from './lib/supabase';
 
@@ -177,7 +177,7 @@ export default function App() {
           sessionStorage.removeItem('tracemail_google_auth_intent');
           window.setTimeout(async () => {
             await signOutUser();
-            loadUserData(null);
+            loadUserData(DEMO_USER);
             setCurrentScreen('landing');
             setAuthMode('signup');
             setIsAuthOpen(true);
@@ -201,7 +201,7 @@ export default function App() {
           console.warn('Error processing auth state change:', err);
         }
       } else if (event === 'SIGNED_OUT') {
-        loadUserData(null);
+        loadUserData(DEMO_USER);
       }
     });
 
@@ -220,10 +220,10 @@ export default function App() {
           }
         } else {
           // No real session — show landing with Login/Signup in Navbar
-          loadUserData(null);
+          loadUserData(DEMO_USER);
         }
       } catch (_) {
-        loadUserData(null);
+        loadUserData(DEMO_USER);
       }
     };
 
@@ -334,7 +334,7 @@ export default function App() {
       if (currentUser?.id) {
         try {
           localStorage.setItem(`tracemail_cases_${currentUser.id}`, JSON.stringify(updated));
-        } catch (_) {}
+        } catch (_) { }
       }
       return updated;
     });
@@ -425,9 +425,8 @@ export default function App() {
 
         {/* Main Dynamic View Area: renders the selected whole tab */}
         <main
-          className={`flex-1 min-w-0 transition-all duration-300 ${
-            isSidebarPinned && isSidebarOpen ? 'lg:pl-72' : ''
-          }`}
+          className={`flex-1 min-w-0 transition-all duration-300 ${isSidebarPinned && isSidebarOpen ? 'lg:pl-72' : ''
+            }`}
         >
           {/* 1. Landing Page */}
           {currentScreen === 'landing' && (
@@ -566,7 +565,7 @@ export default function App() {
           } catch (err) {
             console.warn('Logout error:', err);
           }
-          try { localStorage.removeItem('tracemail_active_user'); } catch (_) {}
+          try { localStorage.removeItem('tracemail_active_user'); } catch (_) { }
           setCurrentRole('analyst');
           setCurrentUser(null);
           setCases([]);

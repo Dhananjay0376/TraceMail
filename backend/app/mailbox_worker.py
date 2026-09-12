@@ -6,8 +6,12 @@ import logging
 from datetime import datetime, timezone
 from typing import Dict, Any, List, Optional
 from fastapi import APIRouter, HTTPException
-from google.oauth2.credentials import Credentials
-from googleapiclient.discovery import build
+try:
+    from google.oauth2.credentials import Credentials
+    from googleapiclient.discovery import build
+except ImportError:
+    Credentials = None
+    build = None
 
 from app.database import (
     get_all_monitored_mailboxes,
