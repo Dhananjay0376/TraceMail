@@ -298,24 +298,8 @@ export default function DashboardScreen({
         </div>
       ) : (
         <>
-<<<<<<< HEAD
           {/* 4 Core Summary Stat Cards */}
-          <MagicBento
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 font-mono"
-            enableStars
-            enableSpotlight
-            enableBorderGlow
-            enableTilt
-            enableMagnetism
-            clickEffect
-            particleCount={7}
-            spotlightRadius={260}
-            glowColor="0, 227, 216"
-          >
-=======
-          {/* 4 Core Summary Stat Cards in Paper-Cut Palette */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 font-mono">
->>>>>>> 36eb3ddc732d394196d35c73da4a7443b5877c62
             <StatCard
               title="Total Scanned"
               value={statTotalScanned}
@@ -348,7 +332,7 @@ export default function DashboardScreen({
               icon={Clock}
               color="lime"
             />
-          </MagicBento>
+          </div>
 
           {/* Main Grid: Recent Alerts Table & Mini World Map Widget */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

@@ -1,19 +1,7 @@
 // Comprehensive Mock Store for TraceMail Cybersecurity Intelligence Platform
 // TODO: connect to backend API for live ingestion, threat intelligence feeds, and cases
 
-<<<<<<< HEAD
 // Used by the no-credentials demo flow in AuthModal.
-export const DEMO_USER = {
-  id: 'demo-shri',
-  name: 'Shri',
-  email: 'shri.analyst@apexdefense.com',
-  org: 'Apex Defense',
-  role: 'analyst',
-  isFirstTime: false,
-  isDemo: true,
-};
-
-=======
 export const DEMO_USER = {
   id: "demo-shri",
   isDemo: true,
@@ -26,8 +14,6 @@ export const DEMO_USER = {
 };
 
 export const Demo_User = DEMO_USER;
-
->>>>>>> 36eb3ddc732d394196d35c73da4a7443b5877c62
 export const MOCK_STATS = {
   totalScanned: 14892,
   scannedGrowth: "+12.4% this week",
@@ -533,15 +519,4 @@ export const MOCK_GLOSSARY = [
     plainEnglish: "A large network identifier controlled by internet service providers, cloud datacenters, or telecom operators. Cyber attackers often purchase bulletproof VPS hosting in foreign ASNs that ignore legal copyright or crime takedown requests."
   }
 ];
-
-export const DEMO_USER = {
-  id: "demo-user-001",
-  email: "shri@tracemail.security",
-  name: "Shri",
-  org: "TraceMail Cyber Defense Unit",
-  role: "analyst",
-  avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
-  isFirstTime: false,
-  isDemo: true,
-};
 
