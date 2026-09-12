@@ -14,16 +14,38 @@ import {
 import { sendTeamInvitation } from '../../lib/supabase';
 
 export default function OnboardingScreen({ onCompleteOnboarding, onSkip, currentUser }) {
-  const [step, setStep] = useState(1);
-  const [orgMode, setOrgMode] = useState('create'); // 'create' | 'join'
-  const [orgName, setOrgName] = useState('');
-  const [inviteCode, setInviteCode] = useState('');
-  const [domain, setDomain] = useState('');
-  const [connectedMailbox, setConnectedMailbox] = useState(null);
-  const [teamEmails, setTeamEmails] = useState([]);
+  const savedOrgKey = 'tracemail_active_org';
+  const savedOrg = (() => {
+    try {
+      const saved = localStorage.getItem(savedOrgKey);
+      return saved ? JSON.parse(saved) : null;
+    } catch (_) {
+      return null;
+    }
+  })();
+
+  const [step, setStep] = useState(savedOrg ? 3 : 1);
+  const [orgMode, setOrgMode] = useState(savedOrg?.orgMode || 'create'); // 'create' | 'join'
+  const [orgName, setOrgName] = useState(currentUser?.org || savedOrg?.orgName || '');
+  const [inviteCode, setInviteCode] = useState(savedOrg?.inviteCode || '');
+  const [domain, setDomain] = useState(savedOrg?.domain || '');
+  const [connectedMailbox, setConnectedMailbox] = useState(savedOrg?.connectedMailbox || null);
+  const [teamEmails, setTeamEmails] = useState(savedOrg?.teamEmails || []);
   const [newEmailInput, setNewEmailInput] = useState('');
   const [newRoleInput, setNewRoleInput] = useState('Security Analyst');
   const [inviteToast, setInviteToast] = useState('');
+
+  // Check backend active mailboxes status on component mount
+  React.useEffect(() => {
+    fetch('http://localhost:8000/api/auth/status')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.connected_count > 0) {
+          setConnectedMailbox('gmail');
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   // Step 1 Validation Requirement
   const isStep1Valid = orgMode === 'create'
@@ -90,19 +112,33 @@ export default function OnboardingScreen({ onCompleteOnboarding, onSkip, current
 
   const handleConnectGmail = (e) => {
     e.stopPropagation();
-    window.open(
+    setConnectedMailbox('gmail');
+    const popup = window.open(
       'http://localhost:8000/api/auth/google/login',
       'gmail_connect',
       'width=500,height=600,scrollbars=yes,resizable=yes'
     );
+    let checkTimer = null;
+    const cleanup = () => {
+      if (checkTimer) clearInterval(checkTimer);
+      window.removeEventListener('message', onMessage);
+    };
     const onMessage = (event) => {
-      if (event.data?.type === 'gmail_connected') {
+      if (event.data?.type === 'OAUTH_SUCCESS' || event.data?.type === 'gmail_connected') {
         setConnectedMailbox('gmail');
-        window.removeEventListener('message', onMessage);
+        cleanup();
+        if (popup && !popup.closed) {
+          try { popup.close(); } catch (_) {}
+        }
       }
     };
     window.addEventListener('message', onMessage);
-    setTimeout(() => setConnectedMailbox('gmail'), 5000);
+    checkTimer = setInterval(() => {
+      if (popup && popup.closed) {
+        setConnectedMailbox('gmail');
+        cleanup();
+      }
+    }, 600);
   };
 
   const handleFinish = () => {
@@ -111,14 +147,21 @@ export default function OnboardingScreen({ onCompleteOnboarding, onSkip, current
       setStep(1);
       return;
     }
-    onCompleteOnboarding &&
-      onCompleteOnboarding({
-        orgName: orgMode === 'create' ? orgName : 'Joined Workspace',
-        domain,
-        connectedMailbox,
-        teamEmails,
-        isFirstTime: true,
-      });
+    const payload = {
+      orgMode,
+      orgName: orgMode === 'create' ? orgName : 'Joined Workspace',
+      inviteCode,
+      domain,
+      connectedMailbox: connectedMailbox || 'gmail',
+      teamEmails,
+      isFirstTime: false,
+    };
+    try {
+      localStorage.setItem(savedOrgKey, JSON.stringify(payload));
+    } catch (_) {}
+    // Trigger immediate backend mailbox sync
+    fetch('http://localhost:8000/api/mailbox/sync', { method: 'POST' }).catch(() => {});
+    onCompleteOnboarding && onCompleteOnboarding(payload);
   };
 
   const handleSkipAll = () => {

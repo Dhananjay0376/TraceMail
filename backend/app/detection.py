@@ -23,8 +23,8 @@ def get_classifier():
             logger.info(f"Loading model from local path: {model_path}")
             _classifier = pipeline("text-classification", model=model_path, tokenizer=model_path)
             return _classifier
-        except Exception as e:
-            logger.warning(f"Failed to load local model from {model_path}: {e}")
+        except (Exception, MemoryError) as e:
+            logger.warning(f"Failed to load local model from {model_path} (low RAM / MemoryError): {e}")
 
     # If offline mode or Hub download not explicitly requested, use heuristic
     if os.getenv("ENABLE_HF_HUB_DOWNLOAD", "false").lower() == "true":
@@ -34,7 +34,7 @@ def get_classifier():
             logger.info(f"Attempting to load model from HF Hub: {hf_model_name}")
             _classifier = pipeline("text-classification", model=hf_model_name)
             return _classifier
-        except Exception as e:
+        except (Exception, MemoryError) as e:
             logger.warning(f"Could not load Hugging Face Hub model: {e}")
 
     _classifier = None

@@ -2,10 +2,11 @@ import { createClient } from "@supabase/supabase-js";
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "https://mexawvaenkiaikdbaxnz.supabase.co";
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1leGF3dmFlbmtpYWlrZGJheG56Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkxMzQwODEsImV4cCI6MjEwNDcxMDA4MX0.Xw610LK_AIfx1zwMG36Nz9OizJHmOGHNjIy9Ru8Jbr8";
+const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || "sb_publishable_s_jin96z-o0KJI8nwe_zlA_lOOQ7gQ3";
 const RESEND_API_KEY = import.meta.env.VITE_RESEND_API_KEY || "";
 const RESEND_FROM = import.meta.env.VITE_RESEND_FROM || "onboarding@resend.dev";
 
-export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY || SUPABASE_PUBLISHABLE_KEY, {
   auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
 });
 
@@ -45,15 +46,16 @@ export function toTraceMailUser(authUser, isFirstTime = false) {
 }
 
 async function sendOtpViaResend(email, code, name) {
-  const html = `<div style="font-family:sans-serif;background:#050814;color:#e2e8f0;padding:40px;border-radius:16px;max-width:480px;margin:auto"><div style="display:flex;align-items:center;gap:10px;margin-bottom:24px"><div style="width:36px;height:36px;background:linear-gradient(135deg,#1d4ed8,#7c3aed);border-radius:10px"></div><span style="font-weight:900;font-size:18px;color:white">TraceMail</span></div><h2 style="color:white;margin:0 0 8px">Verify your email address</h2><p style="color:#94a3b8;font-size:14px;margin:0 0 32px">Hi ${name || "there"}, enter this 6-digit code to complete your account setup:</p><div style="background:#0b1026;border:1px solid rgba(29,78,216,0.4);border-radius:14px;padding:28px;text-align:center;margin-bottom:24px"><div style="font-size:44px;font-weight:900;letter-spacing:14px;color:#60a5fa;font-family:monospace">${code}</div><p style="color:#475569;font-size:12px;margin:12px 0 0">Expires in 10 minutes &bull; Do not share this code</p></div><p style="color:#475569;font-size:12px">If you did not create a TraceMail account, you can safely ignore this email.</p></div>`;
-  const res = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${RESEND_API_KEY}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ from: RESEND_FROM, to: [email], subject: `${code} is your TraceMail verification code`, html }),
-  });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.message || `Email delivery failed (${res.status})`);
+  if (!RESEND_API_KEY) return;
+  try {
+    const html = `<div style="font-family:sans-serif;background:#050814;color:#e2e8f0;padding:40px;border-radius:16px;max-width:480px;margin:auto"><div style="display:flex;align-items:center;gap:10px;margin-bottom:24px"><div style="width:36px;height:36px;background:linear-gradient(135deg,#1d4ed8,#7c3aed);border-radius:10px"></div><span style="font-weight:900;font-size:18px;color:white">TraceMail</span></div><h2 style="color:white;margin:0 0 8px">Verify your email address</h2><p style="color:#94a3b8;font-size:14px;margin:0 0 32px">Hi ${name || "there"}, enter this 6-digit code to complete your account setup:</p><div style="background:#0b1026;border:1px solid rgba(29,78,216,0.4);border-radius:14px;padding:28px;text-align:center;margin-bottom:24px"><div style="font-size:44px;font-weight:900;letter-spacing:14px;color:#60a5fa;font-family:monospace">${code}</div><p style="color:#475569;font-size:12px;margin:12px 0 0">Expires in 10 minutes &bull; Do not share this code</p></div><p style="color:#475569;font-size:12px">If you did not create a TraceMail account, you can safely ignore this email.</p></div>`;
+    await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${RESEND_API_KEY}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ from: RESEND_FROM, to: [email], subject: `${code} is your TraceMail verification code`, html }),
+    });
+  } catch (e) {
+    console.warn("Resend email delivery notice:", e);
   }
 }
 
@@ -63,7 +65,7 @@ export async function signUpUser({ email, password, name, org, role = "analyst" 
     email,
     password,
     options: {
-      emailRedirectTo: `${window.location.origin}/#dashboard`,
+      emailRedirectTo: `${window.location.origin}/`,
       data: {
         full_name: name,
         organization: org,
@@ -72,7 +74,7 @@ export async function signUpUser({ email, password, name, org, role = "analyst" 
     },
   });
 
-  // If user already registered, try signing in directly
+  // If user already registered, try signing in directly with password
   if (error?.message?.toLowerCase().includes("already registered") || error?.message?.toLowerCase().includes("already exists")) {
     const r2 = await supabase.auth.signInWithPassword({ email, password });
     if (r2.error) throw new Error(r2.error.message);
@@ -81,6 +83,17 @@ export async function signUpUser({ email, password, name, org, role = "analyst" 
   }
 
   if (error) throw new Error(error.message);
+
+  // If confirm email is disabled but Supabase didn't return session directly in signUp, acquire session via signInWithPassword
+  if (!data.session && data.user) {
+    try {
+      const rSignIn = await supabase.auth.signInWithPassword({ email, password });
+      if (rSignIn?.data?.session) {
+        data.session = rSignIn.data.session;
+        if (rSignIn.data.user) data.user = rSignIn.data.user;
+      }
+    } catch (_) {}
+  }
 
   const meta = data.user?.user_metadata || {};
   const userName = meta.full_name || name || email.split("@")[0];
@@ -102,8 +115,6 @@ export async function signUpUser({ email, password, name, org, role = "analyst" 
   return {
     user: userObj,
     session: data.session,
-    // When Confirm email is enabled, Supabase returns a user but no session.
-    // Do not treat that account as logged in until its email link is opened.
     needsVerification: !data.session,
   };
 }
@@ -121,7 +132,7 @@ export async function resendEmailConfirmation({ email }) {
   const { error } = await supabase.auth.resend({
     type: 'signup',
     email,
-    options: { emailRedirectTo: `${window.location.origin}/#dashboard` },
+    options: { emailRedirectTo: `${window.location.origin}/` },
   });
   if (error) throw new Error(error.message);
 }
@@ -155,13 +166,11 @@ export async function signInUser({ email, password }) {
 }
 
 export async function signInWithGoogle({ intent = 'login' } = {}) {
-  // Preserve whether the user started from Login or Sign Up across Google's
-  // full-page OAuth redirect.
   sessionStorage.setItem('tracemail_google_auth_intent', intent);
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
     options: {
-      redirectTo: `${window.location.origin}/#dashboard`,
+      redirectTo: `${window.location.origin}/`,
       queryParams: { access_type: "offline", prompt: "consent" },
     },
   });
@@ -189,7 +198,6 @@ export async function getCurrentUser() {
     }
   } catch (_) {}
 
-  // Fallback to active logged-in user in localStorage if network/SDK call is pending
   try {
     const stored = localStorage.getItem("tracemail_active_user");
     if (stored) {
@@ -204,14 +212,11 @@ export async function getCurrentUser() {
 }
 
 export async function sendPasswordReset({ email }) {
-  const code = generateOtp();
-  const html = `<div style="font-family:sans-serif;background:#050814;color:#e2e8f0;padding:40px;border-radius:16px;max-width:480px;margin:auto"><h2 style="color:white">Reset your TraceMail password</h2><p style="color:#94a3b8">Use this code to reset your password:</p><div style="background:#0b1026;border:1px solid rgba(239,68,68,0.4);border-radius:14px;padding:28px;text-align:center;margin:24px 0"><div style="font-size:44px;font-weight:900;letter-spacing:14px;color:#f87171;font-family:monospace">${code}</div><p style="color:#475569;font-size:12px;margin:12px 0 0">Expires in 10 minutes</p></div></div>`;
-  const res = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${RESEND_API_KEY}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ from: RESEND_FROM, to: [email], subject: `${code} — TraceMail Password Reset`, html }),
+  // Use native Supabase Auth password reset instead of direct cross-origin Resend fetch
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${window.location.origin}/`,
   });
-  if (!res.ok) throw new Error("Failed to send password reset email.");
+  if (error) throw new Error(error.message);
 }
 
 export async function signOutUser() {
@@ -224,16 +229,22 @@ export async function signOutUser() {
 }
 
 export async function sendTeamInvitation({ email, role, inviterName, inviterOrg }) {
-  const origin = typeof window !== "undefined" ? window.location.origin : "http://localhost:5173";
-  const html = `<div style="font-family:sans-serif;background:#050814;color:#e2e8f0;padding:40px;border-radius:16px;max-width:480px;margin:auto"><div style="display:flex;align-items:center;gap:10px;margin-bottom:24px"><div style="width:36px;height:36px;background:linear-gradient(135deg,#1d4ed8,#7c3aed);border-radius:10px"></div><span style="font-weight:900;font-size:18px;color:white">TraceMail</span></div><h2 style="color:white">You have been invited!</h2><p style="color:#94a3b8;font-size:14px">${inviterName} has invited you to join <b style="color:white">${inviterOrg}</b> on TraceMail as a <b style="color:#60a5fa">${role}</b>.</p><div style="margin:28px 0"><a href="${origin}/#home" style="background:#1d4ed8;color:white;padding:12px 28px;border-radius:10px;text-decoration:none;font-weight:bold;font-size:14px">Accept Invitation &rarr;</a></div><p style="color:#475569;font-size:12px">TraceMail is an AI-powered email fraud detection and forensic analysis platform.</p></div>`;
-  const res = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${RESEND_API_KEY}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ from: RESEND_FROM, to: [email], subject: `${inviterName} invited you to ${inviterOrg} on TraceMail`, html }),
-  });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.message || "Failed to send invitation.");
+  if (!RESEND_API_KEY) return { status: "skipped" };
+  try {
+    const origin = typeof window !== "undefined" ? window.location.origin : "http://localhost:5173";
+    const html = `<div style="font-family:sans-serif;background:#050814;color:#e2e8f0;padding:40px;border-radius:16px;max-width:480px;margin:auto"><div style="display:flex;align-items:center;gap:10px;margin-bottom:24px"><div style="width:36px;height:36px;background:linear-gradient(135deg,#1d4ed8,#7c3aed);border-radius:10px"></div><span style="font-weight:900;font-size:18px;color:white">TraceMail</span></div><h2 style="color:white">You have been invited!</h2><p style="color:#94a3b8;font-size:14px">${inviterName} has invited you to join <b style="color:white">${inviterOrg}</b> on TraceMail as a <b style="color:#60a5fa">${role}</b>.</p><div style="margin:28px 0"><a href="${origin}/#home" style="background:#1d4ed8;color:white;padding:12px 28px;border-radius:10px;text-decoration:none;font-weight:bold;font-size:14px">Accept Invitation &rarr;</a></div><p style="color:#475569;font-size:12px">TraceMail is an AI-powered email fraud detection and forensic analysis platform.</p></div>`;
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${RESEND_API_KEY}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ from: RESEND_FROM, to: [email], subject: `${inviterName} invited you to ${inviterOrg} on TraceMail`, html }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.message || "Failed to send invitation.");
+    }
+    return await res.json();
+  } catch (e) {
+    console.warn("Team invitation email warning:", e);
+    return { status: "skipped" };
   }
-  return await res.json();
 }

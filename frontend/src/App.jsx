@@ -15,6 +15,7 @@ import ForensicReportScreen from './components/screens/ForensicReportScreen';
 import SettingsScreen from './components/screens/SettingsScreen';
 import AdminPanelScreen from './components/screens/AdminPanelScreen';
 import DocumentationScreen from './components/screens/DocumentationScreen';
+import OAuthConsentScreen from './components/screens/OAuthConsentScreen';
 import LogoutModal from './components/screens/LogoutModal';
 import NotFoundScreen from './components/screens/NotFoundScreen';
 import AmbientAura from './components/vfx/AmbientAura';
@@ -27,6 +28,8 @@ const HASH_TO_SCREEN = {
   '#home': 'landing',
   '#landing': 'landing',
   '#dashboard': 'dashboard',
+  '#dashboard/oauth/consent': 'oauth_consent',
+  '#oauth/consent': 'oauth_consent',
   '#submit': 'submit',
   '#loading': 'loading',
   '#result': 'result',
@@ -39,9 +42,11 @@ const HASH_TO_SCREEN = {
   '#docs': 'docs',
   '#onboarding': 'onboarding',
 };
+
 const SCREEN_TO_HASH = {
   landing: '#home',
   dashboard: '#dashboard',
+  oauth_consent: '#dashboard/oauth/consent',
   submit: '#submit',
   loading: '#loading',
   result: '#result',
@@ -157,44 +162,42 @@ export default function App() {
       window.location.href.includes('access_token=') ||
       window.location.hash.includes('access_token');
 
-    // Supabase emits INITIAL_SESSION immediately after subscribing.  This flag
-    // keeps the separate startup check from overwriting a newer auth event.
-    let sessionEventSeen = false;
-
-    const isNewGoogleAccount = (authUser) => {
-      if (authUser.app_metadata?.provider !== 'google') return false;
-      const createdAt = Date.parse(authUser.created_at || '');
-      const lastSignInAt = Date.parse(authUser.last_sign_in_at || '');
-      if (!Number.isFinite(createdAt) || !Number.isFinite(lastSignInAt)) return false;
-      return Date.now() - createdAt < 10 * 60 * 1000 && Math.abs(lastSignInAt - createdAt) < 2 * 60 * 1000;
-    };
+    // On mount, eagerly restore session from Supabase before auth events fire
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        const user = toTraceMailUser(session.user);
+        if (user) {
+          loadUserData(user);
+          const hash = window.location.hash.toLowerCase();
+          const currentTab = HASH_TO_SCREEN[hash];
+          if ((isOAuthRedirect || currentTab === 'landing') && !currentTab) {
+            setCurrentScreen(user.isFirstTime ? 'onboarding' : 'dashboard');
+          } else if (currentTab && currentTab !== 'landing') {
+            setCurrentScreen(currentTab);
+          }
+        }
+      } else {
+        // No active session — show DEMO_USER on landing
+        loadUserData(DEMO_USER);
+      }
+    }).catch(() => loadUserData(DEMO_USER));
 
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
-      sessionEventSeen = true;
       if (session?.user) {
-        const googleAuthIntent = sessionStorage.getItem('tracemail_google_auth_intent');
-        if (event === 'SIGNED_IN' && googleAuthIntent === 'login' && isNewGoogleAccount(session.user)) {
-          sessionStorage.removeItem('tracemail_google_auth_intent');
-          window.setTimeout(async () => {
-            await signOutUser();
-            loadUserData(DEMO_USER);
-            setCurrentScreen('landing');
-            setAuthMode('signup');
-            setIsAuthOpen(true);
-            showToast('No TraceMail account exists for this Google address. Create an account to continue.');
-          }, 0);
-          return;
-        }
         sessionStorage.removeItem('tracemail_google_auth_intent');
         try {
           const user = toTraceMailUser(session.user);
           if (user) {
             loadUserData(user);
             const hash = window.location.hash.toLowerCase();
-            const currentTab = HASH_TO_SCREEN[hash] || 'landing';
-            if (event === 'SIGNED_IN' || isOAuthRedirect || currentTab === 'landing') {
-              setCurrentScreen(user.isFirstTime ? 'onboarding' : 'dashboard');
-              showToast(`Welcome back, ${user.name || 'Analyst'}!`);
+            const currentTab = HASH_TO_SCREEN[hash];
+            if (event === 'SIGNED_IN' || event === 'SIGNED_UP') {
+              if (!currentTab || currentTab === 'landing') {
+                setCurrentScreen(user.isFirstTime ? 'onboarding' : 'dashboard');
+              }
+              showToast(`Welcome, ${user.name || 'Analyst'}!`);
+            } else if (currentTab === 'landing') {
+              setCurrentScreen('dashboard');
             }
           }
         } catch (err) {
@@ -202,37 +205,22 @@ export default function App() {
         }
       } else if (event === 'SIGNED_OUT') {
         loadUserData(DEMO_USER);
+      } else {
+        // Preserve active user from local storage on null session state events
+        try {
+          const storedUser = await getCurrentUser();
+          if (storedUser && !storedUser.isDemo) {
+            loadUserData(storedUser);
+          }
+        } catch (_) {}
       }
     });
-
-    // Initial check for active session on mount
-    const checkActiveSession = async () => {
-      try {
-        const user = await getCurrentUser();
-        if (sessionEventSeen) return;
-        if (user && !user.isDemo) {
-          loadUserData(user);
-          const hash = window.location.hash.toLowerCase();
-          const currentTab = HASH_TO_SCREEN[hash] || 'landing';
-          if (isOAuthRedirect || currentTab === 'landing') {
-            setCurrentScreen(user.isFirstTime ? 'onboarding' : 'dashboard');
-            showToast(`Welcome back, ${user.name || 'Analyst'}!`);
-          }
-        } else {
-          // No real session — show landing with Login/Signup in Navbar
-          loadUserData(DEMO_USER);
-        }
-      } catch (_) {
-        loadUserData(DEMO_USER);
-      }
-    };
-
-    checkActiveSession();
 
     return () => {
       authListener?.subscription?.unsubscribe();
     };
   }, []);
+
 
   // Close sidebar on Escape key if open and not pinned
   useEffect(() => {
@@ -360,11 +348,21 @@ export default function App() {
 
   // Onboarding completion
   const handleCompleteOnboarding = (orgData) => {
-    setCurrentUser((prev) => ({
-      ...prev,
-      org: orgData.orgName || prev.org,
-      isFirstTime: false,
-    }));
+    setCurrentUser((prev) => {
+      const updated = {
+        ...prev,
+        org: orgData.orgName || prev?.org,
+        domain: orgData.domain || prev?.domain,
+        connectedMailbox: orgData.connectedMailbox || prev?.connectedMailbox,
+        isFirstTime: false,
+      };
+      try {
+        if (prev?.id) {
+          localStorage.setItem(`tracemail_user_${prev.id}`, JSON.stringify(updated));
+        }
+      } catch (_) {}
+      return updated;
+    });
     setCurrentScreen('dashboard');
     showToast('Perimeter setup completed! Your security workspace is active.');
   };
@@ -537,6 +535,11 @@ export default function App() {
 
           {/* 14. Documentation & FAQ */}
           {currentScreen === 'docs' && <DocumentationScreen />}
+
+          {/* 15. OAuth Authorization / Consent Screen */}
+          {currentScreen === 'oauth_consent' && (
+            <OAuthConsentScreen currentUser={currentUser} onNavigate={handleNavigate} />
+          )}
 
           {/* 404 Not Found */}
           {currentScreen === 'notfound' && (

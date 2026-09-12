@@ -270,7 +270,8 @@ def check_authentication_records(from_domain: str, raw_bytes: Optional[bytes] = 
     # SPF / DMARC check via checkdmarc if installed
     try:
         import checkdmarc
-        domain_report = checkdmarc.check_domains([from_domain], parked=False, timeout=3.0)
+        logging.getLogger("checkdmarc").setLevel(logging.CRITICAL)
+        domain_report = checkdmarc.check_domains([from_domain], parked=False, timeout=0.8)
         if 'spf' in domain_report and domain_report['spf'].get('record'):
             result['spf_record'] = domain_report['spf']['record']
             result['spf_status'] = 'pass' if domain_report['spf'].get('valid') else 'fail'

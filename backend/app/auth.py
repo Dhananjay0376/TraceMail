@@ -19,14 +19,20 @@ from app.database import (
     delete_monitored_mailbox
 )
 
+# Allow HTTP for local development OAuth callbacks & relaxed scope matching
+os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = os.getenv("OAUTHLIB_INSECURE_TRANSPORT", "1")
+os.environ["OAUTHLIB_RELAX_TOKEN_SCOPE"] = "1"
+
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
 SCOPES = [
+    "openid",
+    "https://www.googleapis.com/auth/userinfo.email",
+    "https://www.googleapis.com/auth/userinfo.profile",
     "https://www.googleapis.com/auth/gmail.readonly",
-    "https://www.googleapis.com/auth/gmail.modify",
-    "https://www.googleapis.com/auth/userinfo.email"
+    "https://www.googleapis.com/auth/gmail.modify"
 ]
 
 DEFAULT_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "")
@@ -57,7 +63,8 @@ def google_login():
     flow = Flow.from_client_config(
         config,
         scopes=SCOPES,
-        redirect_uri=redirect_uri
+        redirect_uri=redirect_uri,
+        autogenerate_code_verifier=False
     )
     auth_url, _ = flow.authorization_url(
         access_type="offline",
@@ -102,7 +109,8 @@ def google_callback(request: Request, code: Optional[str] = Query(None), error: 
         flow = Flow.from_client_config(
             config,
             scopes=SCOPES,
-            redirect_uri=redirect_uri
+            redirect_uri=redirect_uri,
+            autogenerate_code_verifier=False
         )
         flow.fetch_token(code=code)
         credentials = flow.credentials
@@ -179,16 +187,20 @@ def google_callback(request: Request, code: Optional[str] = Query(None), error: 
                 <h2>Mailbox Connected</h2>
                 <p>TraceMail is now actively monitoring: <strong>{email_address}</strong></p>
                 <script>
-                  if (window.opener) {{
-                    window.opener.postMessage({{
+                  function notifyParent() {{
+                    const payload = {{
                       type: 'OAUTH_SUCCESS',
                       email: '{email_address}',
                       status: 'connected'
-                    }}, '*');
+                    }};
+                    try {{ if (window.opener) window.opener.postMessage(payload, '*'); }} catch(e) {{}}
+                    try {{ if (window.parent && window.parent !== window) window.parent.postMessage(payload, '*'); }} catch(e) {{}}
                   }}
+                  notifyParent();
+                  setTimeout(notifyParent, 300);
                   setTimeout(() => {{
-                    window.close();
-                  }}, 1200);
+                    try {{ window.close(); }} catch(e) {{}}
+                  }}, 500);
                 </script>
               </div>
             </body>
