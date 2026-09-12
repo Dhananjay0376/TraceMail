@@ -1,6 +1,17 @@
 // Comprehensive Mock Store for TraceMail Cybersecurity Intelligence Platform
 // TODO: connect to backend API for live ingestion, threat intelligence feeds, and cases
 
+export const DEMO_USER = {
+  id: "demo-shri",
+  isDemo: true,
+  name: "Shri",
+  email: "shri@tracemail.ai",
+  org: "Apex Global Forensics",
+  role: "analyst",
+  avatar: "https://ui-avatars.com/api/?name=Shri&background=1d4ed8&color=fff",
+  isFirstTime: false,
+};
+
 export const MOCK_STATS = {
   totalScanned: 14892,
   scannedGrowth: "+12.4% this week",
