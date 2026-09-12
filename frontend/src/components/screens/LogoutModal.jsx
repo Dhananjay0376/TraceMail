@@ -30,7 +30,6 @@ export default function LogoutModal({ isOpen, onClose, onConfirmLogout }) {
           <button
             onClick={() => {
               onConfirmLogout && onConfirmLogout();
-              onClose();
             }}
             className="px-6 py-2.5 rounded-full bg-[#ff4050] hover:bg-[#e03040] text-white font-bold uppercase tracking-wider transition-all cursor-pointer flex items-center gap-2 shadow-lg shadow-[#ff4050]/20 text-xs"
           >

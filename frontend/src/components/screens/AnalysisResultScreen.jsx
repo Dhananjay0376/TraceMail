@@ -96,26 +96,26 @@ export default function AnalysisResultScreen({
 
       {/* For Employee Mode: Keep it simple & clean */}
       {isEmployee ? (
-        <div className="p-7 rounded-[28px] bg-[#0b1026] border border-white/10 shadow-redrob-card font-mono text-xs space-y-4">
+        <div className="p-7 rounded-[32px] bg-gradient-to-b from-[#0A4174] to-[#001D39] border border-[#49769F]/30 paper-cut-shadow font-mono text-xs space-y-4">
           <h3 className="text-sm font-bold text-white uppercase tracking-wider font-mono">
             Employee Safety Check Breakdown
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="p-4 rounded-2xl bg-[#050814] border border-white/5 space-y-2">
-              <div className="font-bold text-redrob-blue">Why was this email flagged?</div>
-              <ul className="space-y-1.5 text-slate-300 font-sans list-disc list-inside">
+            <div className="p-5 rounded-2xl bg-[#00152b] border border-[#49769F]/20 space-y-2 paper-inset-well">
+              <div className="font-bold text-[#7BBDE8]">Why was this email flagged?</div>
+              <ul className="space-y-1.5 text-[#BDD8E9] font-sans list-disc list-inside">
                 {sample.executiveNotes.map((note, i) => (
                   <li key={i}>{note}</li>
                 ))}
               </ul>
             </div>
 
-            <div className="p-4 rounded-2xl bg-[#050814] border border-white/5 space-y-2">
-              <div className="font-bold text-redrob-blue">What should you do?</div>
-              <div className="space-y-2 text-slate-300 font-sans">
+            <div className="p-5 rounded-2xl bg-[#00152b] border border-[#49769F]/20 space-y-2 paper-inset-well">
+              <div className="font-bold text-[#7BBDE8]">What should you do?</div>
+              <div className="space-y-2 text-[#BDD8E9] font-sans">
                 {sample.riskScore >= 61 ? (
                   <>
-                    <p className="text-redrob-coral font-bold">
+                    <p className="text-red-400 font-bold">
                       ⚠️ Do NOT reply, do NOT click any links, and do NOT open attachments.
                     </p>
                     <p>
@@ -123,7 +123,7 @@ export default function AnalysisResultScreen({
                     </p>
                   </>
                 ) : (
-                  <p className="text-redrob-lime font-bold">
+                  <p className="text-emerald-300 font-bold">
                     ✓ This email is safe. Cryptographic signatures verify it was sent by the legitimate sender.
                   </p>
                 )}
@@ -142,59 +142,59 @@ export default function AnalysisResultScreen({
             <div className="space-y-6 font-mono text-xs animate-fade-in">
               {/* Key Envelope Facts */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="p-4 rounded-2xl bg-[#0b1026] border border-white/10 shadow-sm">
-                  <span className="text-slate-400 uppercase text-[10px] font-bold">Claimed From</span>
+                <div className="p-5 rounded-[22px] bg-gradient-to-br from-[#0A4174] to-[#001D39] border border-[#7BBDE8]/30 paper-cut-shadow">
+                  <span className="text-[#BDD8E9]/80 uppercase text-[10px] font-bold">Claimed From</span>
                   <div className="text-white font-bold text-sm truncate mt-1">{sample.fromDisplay}</div>
-                  <div className="text-redrob-aqua text-[11px] truncate mt-0.5">{sample.sender}</div>
+                  <div className="text-[#7BBDE8] text-[11px] truncate mt-0.5">{sample.sender}</div>
                 </div>
 
-                <div className="p-4 rounded-2xl bg-[#0b1026] border border-white/10 shadow-sm">
-                  <span className="text-slate-400 uppercase text-[10px] font-bold">Reply-To Address</span>
+                <div className="p-5 rounded-[22px] bg-gradient-to-br from-[#0A4174] to-[#001D39] border border-[#7BBDE8]/30 paper-cut-shadow">
+                  <span className="text-[#BDD8E9]/80 uppercase text-[10px] font-bold">Reply-To Address</span>
                   <div
                     className={`font-bold text-sm truncate mt-1 ${
                       sample.replyTo.includes('proton') || sample.replyTo.includes('top')
-                        ? 'text-redrob-coral'
+                        ? 'text-red-400'
                         : 'text-white'
                     }`}
                   >
                     {sample.replyTo}
                   </div>
-                  <div className="text-slate-400 text-[11px] truncate mt-0.5">
+                  <div className="text-[#6EA2B3] text-[11px] truncate mt-0.5">
                     {sample.replyTo !== sample.sender ? '⚠️ Reply-To Mismatch Detected' : 'Aligned'}
                   </div>
                 </div>
 
-                <div className="p-4 rounded-2xl bg-[#0b1026] border border-white/10 shadow-sm">
-                  <span className="text-slate-400 uppercase text-[10px] font-bold">Originating IP</span>
+                <div className="p-5 rounded-[22px] bg-gradient-to-br from-[#0A4174] to-[#001D39] border border-[#7BBDE8]/30 paper-cut-shadow">
+                  <span className="text-[#BDD8E9]/80 uppercase text-[10px] font-bold">Originating IP</span>
                   <div className="text-white font-bold text-sm truncate mt-1">{sample.geo.originIp}</div>
-                  <div className="text-redrob-aqua text-[11px] truncate mt-0.5">
+                  <div className="text-[#7BBDE8] text-[11px] truncate mt-0.5">
                     {sample.geo.city}, {sample.geo.country}
                   </div>
                 </div>
 
-                <div className="p-4 rounded-2xl bg-[#0b1026] border border-white/10 shadow-sm">
-                  <span className="text-slate-400 uppercase text-[10px] font-bold">Social Engineering Triggers</span>
+                <div className="p-5 rounded-[22px] bg-gradient-to-br from-[#0A4174] to-[#001D39] border border-[#7BBDE8]/30 paper-cut-shadow">
+                  <span className="text-[#BDD8E9]/80 uppercase text-[10px] font-bold">Social Engineering Triggers</span>
                   <div className="text-white font-bold text-sm truncate mt-1">{sample.urgencyLevel}</div>
-                  <div className="text-slate-400 text-[11px] truncate mt-0.5">NLP Urgency Heuristic</div>
+                  <div className="text-[#6EA2B3] text-[11px] truncate mt-0.5">NLP Urgency Heuristic</div>
                 </div>
               </div>
 
               {/* Forensic Executive Analysis Points */}
-              <div className="p-6 sm:p-7 rounded-[28px] bg-[#0b1026] border border-white/10 shadow-redrob-card space-y-4">
-                <div className="flex items-center justify-between pb-3 border-b border-white/10">
+              <div className="p-6 sm:p-7 rounded-[32px] bg-gradient-to-b from-[#0A4174] to-[#001D39] border border-[#49769F]/30 paper-cut-shadow space-y-4">
+                <div className="flex items-center justify-between pb-3 border-b border-[#49769F]/30">
                   <h3 className="text-sm font-bold uppercase tracking-wider text-white">
                     Forensic Findings & Key Threat Indicators
                   </h3>
-                  <span className="text-xs text-redrob-blue">Model: DistilBERT NLP + Header Heuristic v3</span>
+                  <span className="text-xs text-[#7BBDE8]">Model: DistilBERT NLP + Header Heuristic v3</span>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 font-sans text-xs">
                   {sample.executiveNotes.map((note, idx) => (
                     <div
                       key={idx}
-                      className="p-3.5 rounded-2xl bg-[#050814] border border-white/5 text-slate-300 leading-relaxed flex items-start gap-3"
+                      className="p-4 rounded-2xl bg-[#00152b] border border-[#49769F]/20 text-[#BDD8E9] leading-relaxed flex items-start gap-3 paper-inset-well"
                     >
-                      <span className="w-5 h-5 rounded-lg bg-redrob-blue/20 border border-redrob-blue/40 flex items-center justify-center text-redrob-aqua text-xs shrink-0 font-mono font-bold">
+                      <span className="w-6 h-6 rounded-xl bg-[#7BBDE8] text-[#001D39] flex items-center justify-center text-xs shrink-0 font-mono font-black shadow">
                         {idx + 1}
                       </span>
                       <span>{note}</span>
