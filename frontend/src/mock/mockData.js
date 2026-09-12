@@ -12,6 +12,8 @@ export const DEMO_USER = {
   isFirstTime: false,
 };
 
+export const Demo_User = DEMO_USER;
+
 export const MOCK_STATS = {
   totalScanned: 14892,
   scannedGrowth: "+12.4% this week",

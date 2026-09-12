@@ -18,7 +18,7 @@ import DocumentationScreen from './components/screens/DocumentationScreen';
 import LogoutModal from './components/screens/LogoutModal';
 import NotFoundScreen from './components/screens/NotFoundScreen';
 import AmbientAura from './components/vfx/AmbientAura';
-import { MOCK_SAMPLES, MOCK_CASES, MOCK_ALERTS } from './mock/mockData';
+import { MOCK_SAMPLES, MOCK_CASES, MOCK_ALERTS, DEMO_USER, Demo_User } from './mock/mockData';
 import { CheckCircle2, X } from 'lucide-react';
 import { supabase, getCurrentUser, signOutUser, toTraceMailUser } from './lib/supabase';
 
