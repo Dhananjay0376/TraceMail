@@ -1,7 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "https://mexawvaenkiaikdbaxnz.supabase.co";
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFub24iLCJyb2xlIjoiYW5vbiIsImlhdCI6MTcwMDAwMDAwMCwiZXhwIjoyMDE3ODc2ODAwfQ.placeholder";
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1leGF3dmFlbmtpYWlrZGJheG56Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkxMzQwODEsImV4cCI6MjEwNDcxMDA4MX0.Xw610LK_AIfx1zwMG36Nz9OizJHmOGHNjIy9Ru8Jbr8";
 const RESEND_API_KEY = import.meta.env.VITE_RESEND_API_KEY || "";
 const RESEND_FROM = import.meta.env.VITE_RESEND_FROM || "onboarding@resend.dev";
 
@@ -26,6 +26,24 @@ function getAvatarUrl(meta, email, name) {
   return `https://unavatar.io/${encodeURIComponent(email || "")}?fallback=https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=1d4ed8&color=fff`;
 }
 
+// Convert the Supabase Auth user supplied by a session event into the shape
+// used by the UI. This does not make an additional network request.
+export function toTraceMailUser(authUser, isFirstTime = false) {
+  if (!authUser) return null;
+  const meta = authUser.user_metadata || {};
+  const userName = meta.full_name || meta.name || meta.display_name || authUser.email?.split('@')[0] || 'Analyst';
+  return {
+    id: authUser.id,
+    email: authUser.email,
+    name: userName,
+    org: meta.organization || 'Security Operations',
+    role: meta.role || 'analyst',
+    avatar: getAvatarUrl(meta, authUser.email, userName),
+    isFirstTime,
+    isDemo: false,
+  };
+}
+
 async function sendOtpViaResend(email, code, name) {
   const html = `<div style="font-family:sans-serif;background:#050814;color:#e2e8f0;padding:40px;border-radius:16px;max-width:480px;margin:auto"><div style="display:flex;align-items:center;gap:10px;margin-bottom:24px"><div style="width:36px;height:36px;background:linear-gradient(135deg,#1d4ed8,#7c3aed);border-radius:10px"></div><span style="font-weight:900;font-size:18px;color:white">TraceMail</span></div><h2 style="color:white;margin:0 0 8px">Verify your email address</h2><p style="color:#94a3b8;font-size:14px;margin:0 0 32px">Hi ${name || "there"}, enter this 6-digit code to complete your account setup:</p><div style="background:#0b1026;border:1px solid rgba(29,78,216,0.4);border-radius:14px;padding:28px;text-align:center;margin-bottom:24px"><div style="font-size:44px;font-weight:900;letter-spacing:14px;color:#60a5fa;font-family:monospace">${code}</div><p style="color:#475569;font-size:12px;margin:12px 0 0">Expires in 10 minutes &bull; Do not share this code</p></div><p style="color:#475569;font-size:12px">If you did not create a TraceMail account, you can safely ignore this email.</p></div>`;
   const res = await fetch("https://api.resend.com/emails", {
@@ -40,46 +58,72 @@ async function sendOtpViaResend(email, code, name) {
 }
 
 export async function signUpUser({ email, password, name, org, role = "analyst" }) {
-  const code = generateOtp();
-  otpStore.set(email.toLowerCase(), { code, expiresAt: Date.now() + 10 * 60 * 1000, password, name, org, role });
-  await sendOtpViaResend(email, code, name);
-  return { user: null, session: null, needsVerification: true };
+  // Directly sign up with Supabase Auth
+  let { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      emailRedirectTo: `${window.location.origin}/#dashboard`,
+      data: {
+        full_name: name,
+        organization: org,
+        role: role,
+      },
+    },
+  });
+
+  // If user already registered, try signing in directly
+  if (error?.message?.toLowerCase().includes("already registered") || error?.message?.toLowerCase().includes("already exists")) {
+    const r2 = await supabase.auth.signInWithPassword({ email, password });
+    if (r2.error) throw new Error(r2.error.message);
+    data = r2.data;
+    error = null;
+  }
+
+  if (error) throw new Error(error.message);
+
+  const meta = data.user?.user_metadata || {};
+  const userName = meta.full_name || name || email.split("@")[0];
+  const userObj = {
+    id: data.user?.id,
+    email: data.user?.email || email,
+    name: userName,
+    org: meta.organization || org || "Security Operations",
+    role: meta.role || role || "analyst",
+    avatar: getAvatarUrl(meta, data.user?.email || email, userName),
+    isFirstTime: true,
+    isDemo: false,
+  };
+
+  if (userObj.id) {
+    try { localStorage.setItem("tracemail_active_user", JSON.stringify(userObj)); } catch (_) {}
+  }
+
+  return {
+    user: userObj,
+    session: data.session,
+    // When Confirm email is enabled, Supabase returns a user but no session.
+    // Do not treat that account as logged in until its email link is opened.
+    needsVerification: !data.session,
+  };
 }
 
 export async function verifyEmailOtp({ email, token }) {
   const key = email.toLowerCase();
   const stored = otpStore.get(key);
-  if (!stored) throw new Error("No verification code found. Please sign up again.");
-  if (Date.now() > stored.expiresAt) { otpStore.delete(key); throw new Error("Code expired. Please sign up again."); }
-  if (stored.code !== token) throw new Error("Incorrect verification code. Please try again.");
-  otpStore.delete(key);
-
-  let { data, error } = await supabase.auth.signUp({
-    email,
-    password: stored.password,
-    options: { data: { full_name: stored.name, organization: stored.org, role: stored.role } },
-  });
-
-  if (error?.message?.toLowerCase().includes("already registered")) {
-    const r2 = await supabase.auth.signInWithPassword({ email, password: stored.password });
-    if (r2.error) throw new Error(r2.error.message);
-    data = r2.data; error = null;
+  if (stored && stored.code === token) {
+    otpStore.delete(key);
   }
-  if (error) throw new Error(error.message);
+  return signUpUser({ email, password: stored?.password || token, name: stored?.name || email.split('@')[0], org: stored?.org || '', role: stored?.role || 'analyst' });
+}
 
-  const meta = data.user?.user_metadata || {};
-  const userName = meta.full_name || stored.name || email.split("@")[0];
-  return {
-    user: {
-      id: data.user?.id,
-      email: data.user?.email || email,
-      name: userName,
-      org: meta.organization || stored.org || "",
-      role: meta.role || stored.role || "analyst",
-      avatar: getAvatarUrl(meta, data.user?.email || email, userName),
-    },
-    session: data.session,
-  };
+export async function resendEmailConfirmation({ email }) {
+  const { error } = await supabase.auth.resend({
+    type: 'signup',
+    email,
+    options: { emailRedirectTo: `${window.location.origin}/#dashboard` },
+  });
+  if (error) throw new Error(error.message);
 }
 
 export async function resendEmailOtp({ email }) {
@@ -95,22 +139,25 @@ export async function signInUser({ email, password }) {
   const { data, error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) throw new Error(error.message);
   const meta = data.user?.user_metadata || {};
-  const userName = meta.full_name || meta.name || data.user.email?.split("@")[0] || "Analyst";
-  return {
-    user: {
-      id: data.user.id,
-      email: data.user.email,
-      name: userName,
-      org: meta.organization || "Security Operations",
-      role: meta.role || "analyst",
-      avatar: getAvatarUrl(meta, data.user.email, userName),
-      isFirstTime: false,
-    },
-    session: data.session,
+  const userName = meta.full_name || meta.name || meta.display_name || data.user.email?.split("@")[0] || "Analyst";
+  const userObj = {
+    id: data.user.id,
+    email: data.user.email,
+    name: userName,
+    org: meta.organization || "Security Operations",
+    role: meta.role || "analyst",
+    avatar: getAvatarUrl(meta, data.user.email, userName),
+    isFirstTime: false,
+    isDemo: false,
   };
+  try { localStorage.setItem("tracemail_active_user", JSON.stringify(userObj)); } catch (_) {}
+  return { user: userObj, session: data.session };
 }
 
-export async function signInWithGoogle() {
+export async function signInWithGoogle({ intent = 'login' } = {}) {
+  // Preserve whether the user started from Login or Sign Up across Google's
+  // full-page OAuth redirect.
+  sessionStorage.setItem('tracemail_google_auth_intent', intent);
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
     options: {
@@ -134,23 +181,26 @@ export async function getCurrentSession() {
 
 export async function getCurrentUser() {
   try {
-    const { data } = await supabase.auth.getUser();
-    if (!data?.user) return null;
-    const meta = data.user.user_metadata || {};
-    const userName = meta.full_name || meta.name || data.user.email?.split("@")[0] || "Analyst";
-    return {
-      id: data.user.id,
-      email: data.user.email,
-      name: userName,
-      org: meta.organization || "",
-      role: meta.role || "analyst",
-      avatar: getAvatarUrl(meta, data.user.email, userName),
-      isFirstTime: false,
-    };
-  } catch (err) {
-    console.warn("Supabase getCurrentUser fallback:", err);
-    return null;
-  }
+    const { data, error } = await supabase.auth.getUser();
+    if (!error && data?.user) {
+      const userObj = toTraceMailUser(data.user);
+      try { localStorage.setItem("tracemail_active_user", JSON.stringify(userObj)); } catch (_) {}
+      return userObj;
+    }
+  } catch (_) {}
+
+  // Fallback to active logged-in user in localStorage if network/SDK call is pending
+  try {
+    const stored = localStorage.getItem("tracemail_active_user");
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      if (parsed && !parsed.isDemo) {
+        return parsed;
+      }
+    }
+  } catch (_) {}
+
+  return null;
 }
 
 export async function sendPasswordReset({ email }) {
@@ -165,7 +215,12 @@ export async function sendPasswordReset({ email }) {
 }
 
 export async function signOutUser() {
-  await supabase.auth.signOut();
+  try {
+    await supabase.auth.signOut();
+  } catch (_) {}
+  try {
+    localStorage.removeItem("tracemail_active_user");
+  } catch (_) {}
 }
 
 export async function sendTeamInvitation({ email, role, inviterName, inviterOrg }) {

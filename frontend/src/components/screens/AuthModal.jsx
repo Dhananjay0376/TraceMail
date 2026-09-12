@@ -15,7 +15,8 @@ import {
   KeyRound,
 } from 'lucide-react';
 import Modal from '../common/Modal';
-import { signUpUser, verifyEmailOtp, resendEmailOtp, signInUser, sendPasswordReset, signInWithGoogle } from '../../lib/supabase';
+import { signUpUser, resendEmailConfirmation, signInUser, sendPasswordReset, signInWithGoogle } from '../../lib/supabase';
+import { DEMO_USER } from '../../mock/mockData';
 
 export default function AuthModal({ isOpen, onClose, onAuthSuccess, initialMode = 'login' }) {
   const [mode, setMode] = useState(initialMode); // 'login', 'signup', 'otp', 'forgot', 'demo'
@@ -28,7 +29,6 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess, initialMode 
   const [phone, setPhone] = useState('');
   const [demoNotes, setDemoNotes] = useState('10k');
   const [agreedTerms, setAgreedTerms] = useState(true);
-  const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [isSuccess, setIsSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [resendTimer, setResendTimer] = useState(30);
@@ -42,7 +42,6 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess, initialMode 
       setMode(initialMode);
       setIsSuccess(false);
       setErrorMessage('');
-      setOtp(['', '', '', '', '', '']);
       setIsLoading(false);
     }
   }, [isOpen, initialMode]);
@@ -60,36 +59,15 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess, initialMode 
     return () => clearInterval(interval);
   }, [mode, resendTimer]);
 
-  const handleOtpChange = (index, value) => {
-    const val = value.slice(-1);
-    const newOtp = [...otp];
-    newOtp[index] = val;
-    setOtp(newOtp);
-
-    // Auto-focus next input
-    if (val && index < 5) {
-      const nextInput = document.getElementById(`otp-input-${index + 1}`);
-      if (nextInput) nextInput.focus();
-    }
-  };
-
-  const handleOtpKeyDown = (index, e) => {
-    if (e.key === 'Backspace' && !otp[index] && index > 0) {
-      const prevInput = document.getElementById(`otp-input-${index - 1}`);
-      if (prevInput) prevInput.focus();
-    }
-  };
-
-  const handleResendOtp = async () => {
+  const handleResendConfirmation = async () => {
     if (!canResend) return;
     setResendTimer(30);
     setCanResend(false);
-    setOtp(['', '', '', '', '', '']);
     setErrorMessage('');
     try {
-      await resendEmailOtp({ email });
+      await resendEmailConfirmation({ email });
     } catch (err) {
-      setErrorMessage('Failed to resend OTP. Please try again.');
+      setErrorMessage(err.message || 'Failed to resend the confirmation email. Please try again.');
     }
   };
 
@@ -119,13 +97,7 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess, initialMode 
           setIsSuccess(true);
           setTimeout(() => {
             setIsSuccess(false);
-            onAuthSuccess && onAuthSuccess({
-              email: result.user.email,
-              name: result.user.user_metadata?.full_name || name,
-              org: result.user.user_metadata?.organization || org,
-              role: result.user.user_metadata?.role || role,
-              isFirstTime: true,
-            });
+            onAuthSuccess && onAuthSuccess(result.user);
             onClose();
           }, 1200);
         }
@@ -138,29 +110,18 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess, initialMode 
     }
 
     if (mode === 'otp') {
-      const enteredOtp = otp.join('');
-      if (enteredOtp.length < 6) {
-        setErrorMessage('Please enter all 6 digits of your verification code.');
-        return;
-      }
       setIsLoading(true);
       try {
-        const result = await verifyEmailOtp({ email, token: enteredOtp });
+        const result = await signInUser({ email, password });
         setSuccessMessage('Email verified successfully! Setting up your workspace...');
         setIsSuccess(true);
         setTimeout(() => {
           setIsSuccess(false);
-          onAuthSuccess && onAuthSuccess({
-            email: result.user?.email || email,
-            name: result.user?.user_metadata?.full_name || name,
-            org: result.user?.user_metadata?.organization || org,
-            role: result.user?.user_metadata?.role || role,
-            isFirstTime: true,
-          });
+          onAuthSuccess && onAuthSuccess(result.user);
           onClose();
         }, 1200);
       } catch (err) {
-        setErrorMessage(err.message || 'Invalid or expired OTP. Please try again.');
+        setErrorMessage(err.message || 'Your email is not confirmed yet. Open the confirmation link in your inbox, then try again.');
       } finally {
         setIsLoading(false);
       }
@@ -176,11 +137,14 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess, initialMode 
         setTimeout(() => {
           setIsSuccess(false);
           onAuthSuccess && onAuthSuccess({
+            id: result.user?.id,
             email: result.user?.email || email,
             name: result.user?.name || email.split('@')[0],
             org: result.user?.org || '',
             role: result.user?.role || 'analyst',
+            avatar: result.user?.avatar,
             isFirstTime: false,
+            isDemo: false,
           });
           onClose();
         }, 1000);
@@ -189,6 +153,17 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess, initialMode 
       } finally {
         setIsLoading(false);
       }
+      return;
+    }
+
+    if (mode === 'demo') {
+      setSuccessMessage('Logged into Demo Account (Shri)');
+      setIsSuccess(true);
+      setTimeout(() => {
+        setIsSuccess(false);
+        onAuthSuccess && onAuthSuccess(DEMO_USER);
+        onClose();
+      }, 1000);
       return;
     }
 
@@ -225,10 +200,19 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess, initialMode 
     setErrorMessage('');
     setIsLoading(true);
     try {
-      await signInWithGoogle();
-      // signInWithGoogle redirects the page, so no further action needed here
+      const result = await signInWithGoogle({ intent: mode === 'signup' ? 'signup' : 'login' });
+      if (result?.user) {
+        setSuccessMessage('Google Authentication confirmed. Launching security console...');
+        setIsSuccess(true);
+        setTimeout(() => {
+          setIsSuccess(false);
+          onAuthSuccess && onAuthSuccess(result.user);
+          onClose();
+        }, 1000);
+      }
     } catch (err) {
       setErrorMessage(err.message || 'Google sign-in failed. Please try again.');
+    } finally {
       setIsLoading(false);
     }
   };
@@ -254,7 +238,7 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess, initialMode 
       case 'signup':
         return 'Step 1 of 2: Organization Account Creation';
       case 'otp':
-        return 'Step 2 of 2: 6-Digit One-Time Security Code';
+        return 'Step 2 of 2: Confirm Your Email Address';
       case 'forgot':
         return 'We will send secure recovery instructions to your email';
       case 'demo':
@@ -390,38 +374,22 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess, initialMode 
           {mode === 'otp' && (
             <div className="space-y-4 py-2">
               <div className="p-3.5 rounded-2xl bg-blue-950/30 border border-blue-800/40 text-blue-200 text-xs leading-relaxed">
-                We sent a 6-digit verification code to <span className="font-mono font-bold text-white">{email || 'your email'}</span>.
-                Enter the code below to confirm your account.
-              </div>
-
-              <div className="flex justify-between gap-2 pt-2">
-                {otp.map((digit, idx) => (
-                  <input
-                    key={idx}
-                    id={`otp-input-${idx}`}
-                    type="text"
-                    maxLength={1}
-                    value={digit}
-                    onChange={(e) => handleOtpChange(idx, e.target.value)}
-                    onKeyDown={(e) => handleOtpKeyDown(idx, e)}
-                    className="w-11 h-12 text-center text-lg font-bold rounded-xl bg-[#050814] border border-white/20 text-white focus:border-redrob-blue focus:ring-1 focus:ring-redrob-blue focus:outline-none font-mono"
-                    autoFocus={idx === 0}
-                  />
-                ))}
+                We sent a confirmation link to <span className="font-mono font-bold text-white">{email || 'your email'}</span>.
+                Open the link to verify your account, then return here and continue.
               </div>
 
               <div className="text-center pt-2">
                 {canResend ? (
                   <button
                     type="button"
-                    onClick={handleResendOtp}
+                    onClick={handleResendConfirmation}
                     className="text-xs text-redrob-blue font-bold hover:underline cursor-pointer"
                   >
-                    Resend Code
+                    Resend Confirmation Email
                   </button>
                 ) : (
                   <p className="text-[11px] text-slate-500 font-mono">
-                    Resend Code in <span className="text-slate-300 font-bold">{resendTimer}s</span>
+                    Resend confirmation email in <span className="text-slate-300 font-bold">{resendTimer}s</span>
                   </p>
                 )}
               </div>
@@ -603,7 +571,7 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess, initialMode 
                   {mode === 'signup'
                     ? 'Create Account'
                     : mode === 'otp'
-                    ? 'Verify & Continue'
+                    ? 'I Verified My Email'
                     : mode === 'login'
                     ? 'Login to Security Dashboard'
                     : mode === 'forgot'
