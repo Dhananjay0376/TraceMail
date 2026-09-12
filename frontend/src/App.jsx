@@ -108,6 +108,12 @@ export default function App() {
     if (targetHash && window.location.hash !== targetHash) {
       window.history.pushState(null, '', targetHash);
     }
+    if (['dashboard', 'submit', 'cases', 'alerts', 'search', 'report', 'settings'].includes(currentScreen)) {
+      if (typeof window !== 'undefined' && window.innerWidth >= 1024) {
+        setIsSidebarOpen(true);
+        setIsSidebarPinned(true);
+      }
+    }
   }, [currentScreen]);
 
   // Helper to load user profile and data
@@ -467,6 +473,7 @@ export default function App() {
               onOpenSubmit={() => handleNavigate('submit')}
               onSelectSample={handleDirectInspect}
               onNavigate={handleNavigate}
+              onToggleSidebar={() => setIsSidebarOpen((prev) => !prev)}
             />
           )}
 
