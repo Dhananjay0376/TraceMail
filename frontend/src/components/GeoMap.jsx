@@ -101,8 +101,8 @@ export default function GeoMap({ hops, originGeo, originIp }) {
           >
             {/* Dark Mode CartoDB TileLayer */}
             <TileLayer
-              attribution='&copy; <a href="https://carto.com/">CartoDB</a> contributors'
-              url="https://cartodb-basemaps-{s}.global.ssl.fastly.net/dark_all/{z}/{x}/{y}.png"
+              attribution='Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ'
+              url="https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}"
             />
 
             {/* Polyline Path between hops */}
