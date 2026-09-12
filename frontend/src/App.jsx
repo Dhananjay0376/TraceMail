@@ -177,7 +177,7 @@ export default function App() {
           const hash = window.location.hash.toLowerCase();
           const currentTab = HASH_TO_SCREEN[hash];
           if ((isOAuthRedirect || currentTab === 'landing') && !currentTab) {
-            setCurrentScreen(user.isFirstTime ? 'onboarding' : 'dashboard');
+            setCurrentScreen('onboarding');
           } else if (currentTab && currentTab !== 'landing') {
             setCurrentScreen(currentTab);
           }
@@ -196,14 +196,10 @@ export default function App() {
           if (user) {
             loadUserData(user);
             const hash = window.location.hash.toLowerCase();
-            const currentTab = HASH_TO_SCREEN[hash];
-            if (event === 'SIGNED_IN' || event === 'SIGNED_UP') {
-              if (!currentTab || currentTab === 'landing') {
-                setCurrentScreen(user.isFirstTime ? 'onboarding' : 'dashboard');
-              }
-              showToast(`Welcome, ${user.name || 'Analyst'}!`);
-            } else if (currentTab === 'landing') {
-              setCurrentScreen('dashboard');
+            const currentTab = HASH_TO_SCREEN[hash] || 'landing';
+            if (event === 'SIGNED_IN' || isOAuthRedirect || currentTab === 'landing') {
+              setCurrentScreen('onboarding');
+              showToast(`Signed in successfully! Organization Setup Wizard loaded.`);
             }
           }
         } catch (err) {
