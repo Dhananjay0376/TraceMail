@@ -317,3 +317,156 @@ def compute_fraud_score(
         "verdict_color": verdict_color,
         "breakdown": breakdown
     }
+
+
+# ── Compatibility shims ──────────────────────────────────────────────────────
+
+def _wrap_compute_fraud_score(
+    model_prob: float = 0.0,
+    is_phishing_label: bool = False,
+    spf_status: str = "none",
+    dkim_status: str = "none",
+    dmarc_status: str = "none",
+    domain_age_days: Any = 365,
+    is_hosting_ip: bool = False,
+    sender_return_path_mismatch: bool = False,
+    extracted_urls: list = None,
+    attachments: list = None,
+    **kwargs
+) -> Dict[str, Any]:
+    """
+    Bridge between old call-site signature and new compute_fraud_score.
+    Returns FraudScoreBreakdown-compatible dict with keys: score, risk_level, factors.
+    """
+    bec_cues = {
+        "bec_heuristic_score": 0.0,
+        "is_bec_suspect": False,
+        "urgency_keywords": [],
+        "financial_keywords": [],
+        "authority_titles": []
+    }
+    age = domain_age_days if isinstance(domain_age_days, int) else 365
+
+    # Check for suspicious URLs/attachments
+    url_sus = any(u.get("is_suspicious") or u.get("risk_score", 0) > 0.5 for u in (extracted_urls or []))
+    att_sus = any(a.get("is_suspicious_extension") or a.get("threat_level", "Safe") != "Safe" for a in (attachments or []))
+
+    raw = _original_compute_fraud_score(
+        model_prob=model_prob,
+        spf_status=spf_status,
+        dkim_status=dkim_status,
+        dmarc_status=dmarc_status,
+        domain_age_days=age,
+        is_hosting_ip=is_hosting_ip,
+        reply_to_mismatch=kwargs.get("reply_to_mismatch", False),
+        display_name_spoofing=kwargs.get("display_name_spoofing", False),
+        bec_cues=bec_cues,
+        return_path_mismatch=sender_return_path_mismatch,
+    )
+    score = raw["fraud_score"]
+    # Add URL/attachment penalty
+    if url_sus:
+        score = min(100, score + 10)
+    if att_sus:
+        score = min(100, score + 10)
+
+    # Map risk_level to simple Low/Medium/High/Critical
+    rl_map = {"LOW": "Low", "MEDIUM": "Medium", "HIGH": "High", "CRITICAL": "Critical"}
+    risk_level = rl_map.get(raw["risk_level"], raw["risk_level"])
+
+    factors = [
+        {"name": b["category"], "points": b["points"], "reason": b["detail"]}
+        for b in raw["breakdown"]
+    ]
+    return {"score": score, "risk_level": risk_level, "factors": factors}
+
+
+# Replace the module-level compute_fraud_score with the wrapped version
+_original_compute_fraud_score = compute_fraud_score
+compute_fraud_score = _wrap_compute_fraud_score
+
+
+def record_and_correlate(
+    case_id: str,
+    domain: str,
+    originating_ip: Optional[str],
+    label: str,
+    score: int,
+    risk_level: str
+) -> Optional[Dict[str, Any]]:
+    """Register a case in the graph and return any matching campaign."""
+    graph_manager.add_case(
+        case_id=case_id,
+        subject="",
+        fraud_score=score,
+        verdict=label,
+        sender_email="",
+        sender_domain=domain or "",
+        reply_to_email=None,
+        origin_ip=originating_ip,
+        hops=[],
+        geo={}
+    )
+    # Check if this domain/IP is now shared with other cases
+    for node in [f"domain:{domain}" if domain else None, f"ip:{originating_ip}" if originating_ip else None]:
+        if node and node in graph_manager.G:
+            linked = [u for u, v, _ in graph_manager.G.in_edges(node, data=True)
+                      if graph_manager.G.nodes[u].get("type") == "case" and u != case_id]
+            if linked:
+                return {
+                    "campaign_id": f"CAMP-{node.split(':')[-1][:8].upper()}",
+                    "shared_ip": originating_ip if "ip:" in node else None,
+                    "shared_domain": domain if "domain:" in node else None,
+                    "related_cases_count": len(linked)
+                }
+    return None
+
+
+def get_campaign_graph_data() -> Dict[str, Any]:
+    """Return graph data formatted for the frontend visualizer."""
+    raw = graph_manager.export_graph_json()
+    nodes = [
+        {
+            "id": n["id"],
+            "label": n["label"],
+            "type": n["type"],
+            "risk_level": None,
+            "score": n.get("score"),
+            "details": {k: v for k, v in n.items() if k not in ("id", "label", "type", "score")}
+        }
+        for n in raw["nodes"]
+    ]
+    edges = [{"source": e["source"], "target": e["target"], "relation": e["relation"]} for e in raw["links"]]
+    return {
+        "nodes": nodes,
+        "edges": edges,
+        "total_cases": raw["total_cases"],
+        "total_campaigns": len(raw["campaigns"])
+    }
+
+
+def rehydrate_graph_from_db(cases: list) -> None:
+    """Reload the in-memory graph from existing DB cases on startup."""
+    for case in cases:
+        try:
+            headers = case.get("headers", {})
+            from_h = headers.get("from_header", "") or ""
+            domain = from_h.split("@")[-1].rstrip(">").strip() if "@" in from_h else ""
+            trace = case.get("trace", [])
+            origin_ip = trace[0].get("ip") if trace else None
+            detection = case.get("detection", {})
+            fraud = case.get("fraud_score", {})
+            graph_manager.add_case(
+                case_id=case.get("id", ""),
+                subject=headers.get("subject", ""),
+                fraud_score=fraud.get("score", 0),
+                verdict=detection.get("label", ""),
+                sender_email=from_h,
+                sender_domain=domain,
+                reply_to_email=headers.get("reply_to"),
+                origin_ip=origin_ip,
+                hops=[],
+                geo={}
+            )
+        except Exception:
+            pass

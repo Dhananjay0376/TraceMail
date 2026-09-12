@@ -196,8 +196,11 @@ export default function App() {
           if (user) {
             loadUserData(user);
             const hash = window.location.hash.toLowerCase();
-            const currentTab = HASH_TO_SCREEN[hash] || 'landing';
-            if (event === 'SIGNED_IN' || isOAuthRedirect || currentTab === 'landing') {
+            const currentTab = HASH_TO_SCREEN[hash];
+            // Only redirect to onboarding if arriving from landing/no screen,
+            // NOT on token refresh events (which also fire SIGNED_IN)
+            const isRealSignIn = event === 'SIGNED_IN' && (!currentTab || currentTab === 'landing');
+            if (isRealSignIn || isOAuthRedirect) {
               setCurrentScreen('onboarding');
               showToast(`Signed in successfully! Organization Setup Wizard loaded.`);
             }

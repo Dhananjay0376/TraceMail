@@ -35,9 +35,9 @@ async def lifespan(app: FastAPI):
     tfidf_predictor = get_tfidf_predictor()
     tfidf_predictor.load()
 
-    # Preload the DistilBERT 3-class model once at application startup
-    distilbert_predictor = get_distilbert_predictor()
-    distilbert_predictor.load()
+    # DistilBERT model preloading disabled at startup to prevent Windows PyTorch C++ DLL crashes
+    # Falling back smoothly to TF-IDF baseline + NLP heuristics engine
+    pass
     
     # Launch automated background mailbox watcher loop
     sync_task = asyncio.create_task(background_mailbox_sync_loop(poll_interval_seconds=15))

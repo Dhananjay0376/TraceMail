@@ -72,26 +72,9 @@ def load_baseline():
 
 
 def load_transformer():
-    """Attempt to load DistilBERT fine-tuned model via Hugging Face pipeline."""
-    global _transformer_pipeline, _transformer_attempted
-    if _transformer_pipeline is None and not _transformer_attempted:
-        _transformer_attempted = True
-        try:
-            from transformers import pipeline
-            logger.info(f"Attempting to load DistilBERT model: {HF_MODEL_NAME}")
-            _transformer_pipeline = pipeline(
-                "text-classification",
-                model=HF_MODEL_NAME,
-                tokenizer=HF_MODEL_NAME,
-                device=-1  # CPU by default
-            )
-            logger.info("DistilBERT model loaded successfully.")
-        except Exception as e:
-            logger.warning(f"Could not load Hugging Face transformer ({e}). Falling back to baseline.")
-            _transformer_pipeline = None
-    return _transformer_pipeline
+    """Bypassed loading DistilBERT model to avoid Windows PyTorch DLL crashes."""
+    return None
 
->>>>>>> 06f286df53b9763b098d37dbffd5c9230313ab50
 
 def extract_nlp_cues(text: str) -> Dict[str, Any]:
     """Scan text for urgency, BEC, financial, and authority social engineering indicators."""
@@ -206,4 +189,34 @@ def predict_text(text: str) -> Dict[str, Any]:
         "confidence": prob if is_phish else round(1.0 - prob, 4),
         "engine": "heuristic_fallback",
         "bec_cues": cues
+    }
+
+
+def classify_email(text: str) -> Dict[str, Any]:
+    """
+    Public-facing classification entry point used by the pipeline and API.
+    Maps internal prediction labels to TraceMail canonical labels:
+    Legitimate, Phishing, Spam, BEC.
+    Returns a dict compatible with DetectionResult schema.
+    """
+    result = predict_text(text)
+    prediction = result.get("prediction", "legitimate").lower()
+    confidence = result.get("confidence", 0.5)
+    engine = result.get("engine", "unknown")
+    cues = result.get("bec_cues", {})
+
+    # Determine final label
+    if cues.get("is_bec_suspect"):
+        label = "BEC"
+    elif prediction == "phishing":
+        label = "Phishing"
+    elif prediction == "spam":
+        label = "Spam"
+    else:
+        label = "Legitimate"
+
+    return {
+        "label": label,
+        "confidence": round(confidence, 4),
+        "model_version": engine
     }
