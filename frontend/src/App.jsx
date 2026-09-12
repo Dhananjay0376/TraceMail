@@ -205,7 +205,6 @@ export default function App() {
             } else if (currentTab === 'landing') {
               setCurrentScreen('dashboard');
             }
-            }
           }
         } catch (err) {
           console.warn('Error processing auth state change:', err);
