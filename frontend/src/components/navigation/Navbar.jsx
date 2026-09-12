@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   ShieldAlert,
   UploadCloud,
@@ -26,6 +26,7 @@ export default function Navbar({
 }) {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const userMenuRef = useRef(null);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -38,6 +39,17 @@ export default function Navbar({
     handleScroll();
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Close profile dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target)) {
+        setIsUserMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   const cardNavItems = [
@@ -97,10 +109,16 @@ export default function Navbar({
   );
 
   const profileDropdown = (
-    <div className="relative shrink-0">
+    <div ref={userMenuRef} className="relative shrink-0 z-50">
       <button
-        onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-        className="flex items-center gap-1.5 p-1 rounded-full border border-white/10 hover:border-white/20 bg-[#050814]/80 transition-all cursor-pointer"
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          setIsUserMenuOpen((prev) => !prev);
+        }}
+        className="flex items-center gap-1.5 p-1 rounded-full border border-white/10 hover:border-white/20 bg-[#050814] transition-all cursor-pointer shadow-md"
+        aria-label="User profile menu"
+        aria-expanded={isUserMenuOpen}
       >
         {currentUser?.avatar ? (
           <img
@@ -131,7 +149,7 @@ export default function Navbar({
       </button>
 
       {isUserMenuOpen && (
-        <div className="absolute right-0 mt-2 w-56 rounded-2xl bg-[#0b1026] border border-white/10 shadow-redrob-card p-2 z-50 animate-fade-in text-xs">
+        <div className="absolute right-0 mt-2 w-56 rounded-2xl bg-[#0b1026] border border-white/15 shadow-2xl p-2 z-50 animate-fade-in text-xs">
           <div className="px-3 py-2 border-b border-white/10 flex items-center gap-2.5">
             {currentUser?.avatar && (
               <img
@@ -157,11 +175,13 @@ export default function Navbar({
           <div className="py-1">
             {/* Alerts inside profile dropdown */}
             <button
-              onClick={() => {
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
                 onNavigate('alerts');
                 setIsUserMenuOpen(false);
               }}
-              className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-slate-300 hover:text-white hover:bg-white/5 transition-all text-left"
+              className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-slate-300 hover:text-white hover:bg-white/10 transition-all text-left cursor-pointer"
             >
               <div className="relative">
                 <Bell className="w-4 h-4 text-slate-400" />
@@ -177,21 +197,25 @@ export default function Navbar({
               )}
             </button>
             <button
-              onClick={() => {
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
                 onNavigate('settings');
                 setIsUserMenuOpen(false);
               }}
-              className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-slate-300 hover:text-white hover:bg-white/5 transition-all text-left"
+              className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-slate-300 hover:text-white hover:bg-white/10 transition-all text-left cursor-pointer"
             >
               <Settings className="w-4 h-4 text-slate-400" />
               <span>Security Settings</span>
             </button>
             <button
-              onClick={() => {
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
                 onNavigate('onboarding');
                 setIsUserMenuOpen(false);
               }}
-              className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-slate-300 hover:text-white hover:bg-white/5 transition-all text-left"
+              className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-slate-300 hover:text-white hover:bg-white/10 transition-all text-left cursor-pointer"
             >
               <ExternalLink className="w-4 h-4 text-slate-400" />
               <span>Org Setup Wizard</span>
@@ -200,11 +224,13 @@ export default function Navbar({
 
           <div className="pt-1 border-t border-white/10">
             <button
-              onClick={() => {
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
                 setIsUserMenuOpen(false);
                 onOpenLogout();
               }}
-              className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-redrob-coral hover:bg-redrob-coral/10 transition-all text-left font-semibold"
+              className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-redrob-coral hover:bg-redrob-coral/10 transition-all text-left font-semibold cursor-pointer"
             >
               <LogOut className="w-4 h-4" />
               <span>Log Out Session</span>
