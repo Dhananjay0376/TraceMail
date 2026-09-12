@@ -193,8 +193,8 @@ export default function App() {
             const hash = window.location.hash.toLowerCase();
             const currentTab = HASH_TO_SCREEN[hash] || 'landing';
             if (event === 'SIGNED_IN' || isOAuthRedirect || currentTab === 'landing') {
-              setCurrentScreen(user.isFirstTime ? 'onboarding' : 'dashboard');
-              showToast(`Welcome back, ${user.name || 'Analyst'}!`);
+              setCurrentScreen('onboarding');
+              showToast(`Signed in successfully! Organization Setup Wizard loaded.`);
             }
           }
         } catch (err) {
@@ -343,19 +343,11 @@ export default function App() {
     if (!isSidebarPinned) setIsSidebarOpen(false);
   };
 
-  // Auth success callback
+  // Auth success callback - directly open Organization Setup Wizard ('onboarding')
   const handleAuthSuccess = (user) => {
     loadUserData(user);
-
-    if (user.isFirstTime) {
-      // First-time users go to Onboarding
-      setCurrentScreen('onboarding');
-      showToast('Account created! Welcome to the workspace onboarding wizard.');
-    } else {
-      // Returning users go to Dashboard
-      setCurrentScreen('dashboard');
-      showToast(`Welcome back, ${user.name || 'Analyst'}!`);
-    }
+    setCurrentScreen('onboarding');
+    showToast(`Signed in successfully! Organization Setup Wizard loaded.`);
   };
 
   // Onboarding completion

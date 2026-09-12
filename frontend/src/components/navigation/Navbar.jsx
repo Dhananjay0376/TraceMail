@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
   ShieldAlert,
-  UploadCloud,
   Bell,
   Settings,
   LogOut,
@@ -241,6 +240,32 @@ export default function Navbar({
     </div>
   );
 
+  const headerRightActions = (
+    <div className="flex items-center gap-2 sm:gap-3 z-50">
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          onOpenLogin && onOpenLogin();
+        }}
+        className="px-3.5 py-1.5 rounded-full border border-white/20 hover:border-white/40 text-slate-200 hover:text-white font-mono text-xs font-bold transition-all cursor-pointer bg-white/5 hover:bg-white/15"
+      >
+        Login
+      </button>
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          onOpenSignUp && onOpenSignUp();
+        }}
+        className="px-4 py-1.5 rounded-full bg-redrob-blue hover:bg-[#1d3fe8] text-white font-mono text-xs font-bold uppercase tracking-wider transition-all shadow-md cursor-pointer"
+      >
+        Sign Up
+      </button>
+      {profileDropdown}
+    </div>
+  );
+
   return (
     <header
       className={`fixed top-0 left-0 right-0 z-50 w-full transition-all duration-300 ${
@@ -254,18 +279,14 @@ export default function Navbar({
       }}
     >
       <div className="w-full px-4 sm:px-6 lg:px-8 py-2">
-        {/* Full-width CardNav rectangle line containing Logo, + SCAN CTA, and Profile button */}
+        {/* Full-width CardNav rectangle line containing Logo, Login, Sign Up, and Profile button */}
         <CardNav
           logo={brandLogo}
           logoAlt="TraceMail Logo"
           items={cardNavItems}
           baseColor="#0b1026"
           menuColor="#ffffff"
-          buttonBgColor="#2b52ff"
-          buttonTextColor="#ffffff"
-          ctaText="+ Scan"
-          onCtaClick={onOpenSubmit}
-          rightContent={profileDropdown}
+          rightContent={headerRightActions}
         />
       </div>
     </header>
