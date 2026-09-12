@@ -34,6 +34,7 @@ const heroSlides = [
       'Expose phishing, spoofing, and lookalike domains instantly. Reconstruct RFC 822 relay paths, audit DMARC cryptographic signatures, and generate court-ready forensic reports in seconds.',
     bg: 'from-[#061B2E] via-[#0A3E66] to-[#061B2E]',
     accent: '#2b52ff',
+    subGradient: 'from-blue-400 via-sky-300 to-cyan-300',
     product: 'Email Forensics',
   },
   {
@@ -44,6 +45,7 @@ const heroSlides = [
       'Reconstruct the full RFC 822 MTA relay path exposing proxy concealment, TOR exit nodes, and bulletproof ASNs with multi-hop IP geolocation intelligence.',
     bg: 'from-[#061B2E] via-[#083B4B] to-[#061B2E]',
     accent: '#00e3d8',
+    subGradient: 'from-cyan-400 via-teal-300 to-emerald-300',
     product: 'Geo Intelligence',
   },
   {
@@ -54,6 +56,7 @@ const heroSlides = [
       'Correlate isolated email threats into unified coordinated campaigns using graph network clustering and shared IOC fingerprints for total attribution.',
     bg: 'from-[#061B2E] via-[#0A3E66] to-[#061B2E]',
     accent: '#7c24ff',
+    subGradient: 'from-purple-400 via-fuchsia-300 to-indigo-300',
     product: 'Campaign Attribution',
   },
 ];
@@ -184,6 +187,26 @@ function FAQItem({ q, a, isOpen, onToggle }) {
   );
 }
 
+// ─── Formatted Description Renderer ──────────────────────────────────────────
+function FormattedDescription({ text }) {
+  const formatted = text
+    .replace(/(RFC 822)/g, '<code class="font-mono text-xs sm:text-sm px-1.5 py-0.5 rounded bg-cyan-950/80 border border-cyan-500/40 text-cyan-300 font-semibold">RFC 822</code>')
+    .replace(/(MTA relay path|relay paths)/g, '<span class="text-white font-medium">$1</span>')
+    .replace(/(TOR exit nodes)/g, '<code class="font-mono text-xs sm:text-sm px-1.5 py-0.5 rounded bg-amber-950/80 border border-amber-500/40 text-amber-300 font-semibold">TOR exit nodes</code>')
+    .replace(/(bulletproof ASNs)/g, '<code class="font-mono text-xs sm:text-sm px-1.5 py-0.5 rounded bg-red-950/80 border border-red-500/40 text-red-300 font-semibold">bulletproof ASNs</code>')
+    .replace(/(DMARC cryptographic signatures|DMARC)/g, '<code class="font-mono text-xs sm:text-sm px-1.5 py-0.5 rounded bg-blue-950/80 border border-blue-500/40 text-blue-300 font-semibold">$1</code>')
+    .replace(/(IP geolocation intelligence)/g, '<span class="text-white font-medium">$1</span>')
+    .replace(/(graph network clustering)/g, '<span class="text-white font-medium">$1</span>')
+    .replace(/(IOC fingerprints)/g, '<code class="font-mono text-xs sm:text-sm px-1.5 py-0.5 rounded bg-purple-950/80 border border-purple-500/40 text-purple-300 font-semibold">IOC fingerprints</code>');
+
+  return (
+    <p
+      className="mt-6 text-base sm:text-lg text-slate-300 max-w-2xl leading-relaxed font-sans"
+      dangerouslySetInnerHTML={{ __html: formatted }}
+    />
+  );
+}
+
 // ─── Main Component ───────────────────────────────────────────────────────────
 export default function LandingScreen({
   onStartAnalysis,
@@ -264,18 +287,23 @@ export default function LandingScreen({
 
         <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-8 pt-4 pb-12 flex flex-col min-h-screen">
 
-          {/* Main headline — massive editorial typography */}
+          {/* Main headline — authentic, high-impact cybersecurity typography */}
           <div className="flex-1 flex flex-col justify-center">
-            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold text-white leading-[1.1] tracking-tight mb-4">
-              {slide.headline}
-              <span className="block font-serif italic font-light text-white/70 mt-2 text-2xl sm:text-4xl lg:text-5xl">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/5 border border-white/10 backdrop-blur-md mb-6 w-fit shadow-inner">
+              <span className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: slide.accent }} />
+              <span className="font-mono text-xs uppercase tracking-widest font-bold text-slate-200">
+                {slide.label}
+              </span>
+            </div>
+
+            <h1 className="text-4xl sm:text-6xl lg:text-7xl font-extrabold text-white leading-[1.08] tracking-tight mb-2 font-sans">
+              <span className="block drop-shadow-sm">{slide.headline}</span>
+              <span className={`block font-extrabold tracking-tight mt-2 text-3xl sm:text-5xl lg:text-6xl bg-gradient-to-r ${slide.subGradient || 'from-cyan-400 to-blue-400'} bg-clip-text text-transparent`}>
                 {slide.sub}
               </span>
             </h1>
 
-            <p className="mt-6 text-base sm:text-lg text-white/50 max-w-2xl leading-relaxed font-sans">
-              {slide.description}
-            </p>
+            <FormattedDescription text={slide.description} />
 
             {/* CTA Buttons */}
             <div className="mt-10 flex flex-wrap items-center gap-4">
