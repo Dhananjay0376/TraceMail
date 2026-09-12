@@ -834,12 +834,14 @@ export default function LandingScreen({
         {/* Full-bleed looping video background */}
         <video
           className="absolute inset-0 w-full h-full object-cover"
-          src="/cta-bg.mp4"
           autoPlay
           muted
           loop
           playsInline
-        />
+        >
+          <source src="/tracemail_tracemail.webm" type="video/webm" />
+          <source src="/cta-bg.mp4" type="video/mp4" />
+        </video>
         {/* Dark overlay for text readability */}
         <div className="absolute inset-0 bg-gradient-to-r from-black/65 via-black/35 to-black/10" />
 
