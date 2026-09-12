@@ -242,28 +242,29 @@ export default function App() {
   // Navigate when an option of the main menu is clicked
   const handleNavigate = (screenId) => {
     setCurrentScreen(screenId);
-      };
+  };
+
 
   // Switch sample email and run simulated scan
   const handleSelectSampleAndAnalyze = (sampleId) => {
     const found = MOCK_SAMPLES.find((s) => s.id === sampleId) || MOCK_SAMPLES[0];
     setSelectedSample(found);
     setCurrentScreen('loading');
-      };
+  };
 
   // Direct inspect without loading
   const handleDirectInspect = (sampleId) => {
     const found = MOCK_SAMPLES.find((s) => s.id === sampleId) || MOCK_SAMPLES[0];
     setSelectedSample(found);
     setCurrentScreen('result');
-      };
+  };
 
   // Upload or raw text analysis submission
   const handleAnalyzeSubmission = ({ sampleId }) => {
     const found = MOCK_SAMPLES.find((s) => s.id === sampleId) || MOCK_SAMPLES[0];
     setSelectedSample(found);
     setCurrentScreen('loading');
-      };
+  };
 
   // Action dispatch from Analysis Result
   const handleResultAction = (action) => {
@@ -316,7 +317,7 @@ export default function App() {
     });
     showToast(`Case ${newCaseId} successfully opened in Case Queue (New / Triage)!`);
     setCurrentScreen('cases');
-      };
+  };
 
   // Auth success callback - directly open Organization Setup Wizard ('onboarding')
   const handleAuthSuccess = (user) => {
