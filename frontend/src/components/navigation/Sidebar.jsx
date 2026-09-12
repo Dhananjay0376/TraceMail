@@ -152,9 +152,8 @@ export default function Sidebar({
 
       {/* Main Left-Hand Side Navigation Drawer / Sidebar */}
       <aside
-        className={`fixed top-16 bottom-0 left-0 z-50 w-72 bg-[#080d1f] border-r border-white/10 shadow-2xl flex flex-col transition-all duration-300 ease-in-out font-sans ${
-          isPinned ? 'lg:z-30' : 'z-50'
-        }`}
+        className={`fixed top-16 bottom-0 left-0 z-50 w-72 bg-[#080d1f] border-r border-white/10 shadow-2xl flex flex-col transition-all duration-300 ease-in-out font-sans ${isPinned ? 'lg:z-30' : 'z-50'
+          }`}
       >
         {/* Sidebar Header: Brand & Main Menu Controls */}
         <div className="p-4 border-b border-white/10 bg-[#050814]/80 flex items-center justify-between">
@@ -182,11 +181,10 @@ export default function Sidebar({
             <button
               onClick={onTogglePin}
               title={isPinned ? 'Unpin Sidebar (Drawer mode)' : 'Pin Sidebar to left'}
-              className={`hidden lg:flex p-1.5 rounded-xl border transition-all cursor-pointer spring-hover ${
-                isPinned
+              className={`hidden lg:flex p-1.5 rounded-xl border transition-all cursor-pointer spring-hover ${isPinned
                   ? 'bg-redrob-blue/20 text-white border-redrob-blue/40 shadow-sm'
                   : 'bg-[#0b1026] text-slate-400 border-white/10 hover:text-white'
-              }`}
+                }`}
             >
               {isPinned ? <Pin className="w-3.5 h-3.5" /> : <PinOff className="w-3.5 h-3.5" />}
             </button>
@@ -208,31 +206,28 @@ export default function Sidebar({
           <div className="flex items-center gap-1 bg-[#050814] p-0.5 rounded-full border border-white/10">
             <button
               onClick={() => onRoleChange('employee')}
-              className={`px-2 py-0.5 rounded-full text-[10px] font-bold transition-all ${
-                currentRole === 'employee'
+              className={`px-2 py-0.5 rounded-full text-[10px] font-bold transition-all ${currentRole === 'employee'
                   ? 'bg-redrob-lime text-slate-950 font-extrabold'
                   : 'text-slate-400 hover:text-slate-200'
-              }`}
+                }`}
             >
               Emp
             </button>
             <button
               onClick={() => onRoleChange('analyst')}
-              className={`px-2 py-0.5 rounded-full text-[10px] font-bold transition-all ${
-                currentRole === 'analyst'
+              className={`px-2 py-0.5 rounded-full text-[10px] font-bold transition-all ${currentRole === 'analyst'
                   ? 'bg-redrob-blue text-white font-extrabold'
                   : 'text-slate-400 hover:text-slate-200'
-              }`}
+                }`}
             >
               Analyst
             </button>
             <button
               onClick={() => onRoleChange('admin')}
-              className={`px-2 py-0.5 rounded-full text-[10px] font-bold transition-all ${
-                currentRole === 'admin'
+              className={`px-2 py-0.5 rounded-full text-[10px] font-bold transition-all ${currentRole === 'admin'
                   ? 'bg-redrob-violet text-white font-extrabold'
                   : 'text-slate-400 hover:text-slate-200'
-              }`}
+                }`}
             >
               Admin
             </button>
@@ -255,11 +250,10 @@ export default function Sidebar({
                   <button
                     key={item.id}
                     onClick={() => onNavigate(item.id)}
-                    className={`w-full group flex items-center justify-between px-3 py-2.5 rounded-2xl text-left transition-all cursor-pointer relative spring-hover ${
-                      isActive
+                    className={`w-full group flex items-center justify-between px-3 py-2.5 rounded-2xl text-left transition-all cursor-pointer relative spring-hover ${isActive
                         ? 'bg-gradient-to-r from-redrob-blue/20 via-redrob-blue/10 to-redrob-violet/10 text-white border border-redrob-blue/40 shadow-redrob-glow'
                         : 'text-slate-300 hover:text-white hover:bg-white/5 border border-transparent'
-                    }`}
+                      }`}
                   >
                     {/* Active Bar indicator */}
                     {isActive && (
@@ -268,19 +262,17 @@ export default function Sidebar({
 
                     <div className="flex items-center gap-3 min-w-0">
                       <div
-                        className={`w-8 h-8 rounded-xl flex items-center justify-center transition-all ${
-                          isActive
+                        className={`w-8 h-8 rounded-xl flex items-center justify-center transition-all ${isActive
                             ? 'bg-redrob-blue text-white shadow-sm'
                             : 'bg-[#0b1026] text-slate-400 border border-white/5 group-hover:text-redrob-aqua group-hover:bg-[#0f1738]'
-                        }`}
+                          }`}
                       >
                         <Icon className="w-4 h-4" />
                       </div>
                       <div className="truncate">
                         <p
-                          className={`text-xs font-medium truncate ${
-                            isActive ? 'text-white font-bold' : 'text-slate-200 group-hover:text-white'
-                          }`}
+                          className={`text-xs font-medium truncate ${isActive ? 'text-white font-bold' : 'text-slate-200 group-hover:text-white'
+                            }`}
                         >
                           {item.label}
                         </p>
@@ -293,19 +285,17 @@ export default function Sidebar({
                     <div className="flex items-center gap-1.5 ml-2 shrink-0">
                       {typeof item.badge === 'number' && item.badge > 0 && (
                         <span
-                          className={`px-2 py-0.5 rounded-full text-[10px] font-mono border ${
-                            item.badgeColor || 'bg-redrob-coral text-white'
-                          }`}
+                          className={`px-2 py-0.5 rounded-full text-[10px] font-mono border ${item.badgeColor || 'bg-redrob-coral text-white'
+                            }`}
                         >
                           {item.badge}
                         </span>
                       )}
                       <ChevronRight
-                        className={`w-3.5 h-3.5 transition-transform ${
-                          isActive
+                        className={`w-3.5 h-3.5 transition-transform ${isActive
                             ? 'text-redrob-aqua translate-x-0.5'
                             : 'text-slate-600 group-hover:text-slate-400 group-hover:translate-x-0.5'
-                        }`}
+                          }`}
                       />
                     </div>
                   </button>
@@ -337,25 +327,27 @@ export default function Sidebar({
                 />
               ) : (
                 <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-redrob-blue to-redrob-violet flex items-center justify-center text-white font-mono text-xs font-bold shrink-0">
-                  {(currentUser?.name || 'S').charAt(0).toUpperCase()}
+                  {currentUser ? (currentUser.name || 'U').charAt(0).toUpperCase() : 'G'}
                 </div>
               )}
               <div className="truncate">
                 <span className="text-white font-semibold block truncate text-xs">
-                  {currentRole === 'employee' ? 'David Miller' : (currentUser?.name || 'Shri')}
+                  {currentUser ? currentUser.name : 'Guest User'}
                 </span>
-                <span className="text-[10px] text-redrob-blue truncate block font-mono">
-                  {currentRole === 'admin' ? 'SOC Admin' : currentRole === 'analyst' ? 'Lead Analyst' : 'Reporter'}
+                <span className="text-[10px] text-redrob-aqua truncate block font-mono">
+                  {currentUser ? (currentUser.email || currentUser.role || currentRole) : 'Not Logged In'}
                 </span>
               </div>
             </div>
-            <button
-              onClick={onOpenLogout}
-              title="Log Out Session"
-              className="p-1.5 rounded-lg hover:bg-redrob-coral/20 hover:text-redrob-coral text-slate-400 transition-all cursor-pointer"
-            >
-              <LogOut className="w-3.5 h-3.5" />
-            </button>
+            {currentUser && (
+              <button
+                onClick={onOpenLogout}
+                title="Log Out Session"
+                className="p-1.5 rounded-lg hover:bg-redrob-coral/20 hover:text-redrob-coral text-slate-400 transition-all cursor-pointer"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+              </button>
+            )}
           </div>
         </div>
       </aside>

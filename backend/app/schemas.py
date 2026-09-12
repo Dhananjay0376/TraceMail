@@ -4,6 +4,32 @@ from typing import List, Optional, Dict, Any
 class ClassifyRequest(BaseModel):
     text: str = Field(..., description="Raw text or email body to classify")
 
+class ClassProbabilities(BaseModel):
+    legitimate: float = Field(0.0, description="Legitimate probability")
+    phishing: float = Field(0.0, description="Phishing probability")
+    spam: float = Field(0.0, description="Spam probability")
+
+class PredictRequest(BaseModel):
+    email_text: Optional[str] = Field(None, description="Raw email content to classify")
+    text: Optional[str] = Field(None, description="Alternative raw text field")
+
+    def get_content(self) -> str:
+        return (self.email_text or self.text or "").strip()
+
+class ModelPrediction(BaseModel):
+    predicted_label: str = Field(..., description="Predicted label (legitimate, phishing, spam)")
+    confidence: float = Field(..., description="Confidence probability between 0.0 and 1.0")
+    class_probabilities: ClassProbabilities
+
+class NlpAnalysis(BaseModel):
+    final_label: str = Field(..., description="Combined final label from all models")
+    confidence: float = Field(..., description="Combined confidence between 0.0 and 1.0")
+
+class PredictResponse(BaseModel):
+    models: Dict[str, ModelPrediction] = Field(..., description="Per-model prediction results")
+    nlp_analysis: NlpAnalysis = Field(..., description="Combined NLP analysis across models")
+
+
 class DetectionResult(BaseModel):
     label: str = Field(..., description="Predicted label: Legitimate, Phishing, Spam, or BEC")
     confidence: float = Field(..., description="Confidence probability between 0.0 and 1.0")

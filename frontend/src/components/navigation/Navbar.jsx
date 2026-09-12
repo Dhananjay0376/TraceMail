@@ -22,6 +22,8 @@ export default function Navbar({
   isSidebarOpen,
   onToggleSidebar,
   currentUser,
+  onOpenLogin,
+  onOpenSignUp,
 }) {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -191,97 +193,127 @@ export default function Navbar({
               <span>+ Scan</span>
             </button>
 
-            {/* User Profile Dropdown */}
-            <div className="relative">
-              <button
-                onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                className="flex items-center gap-1.5 p-1 rounded-full border border-white/10 hover:border-white/20 bg-[#0b1026] transition-all cursor-pointer"
-              >
-                {currentUser?.avatar ? (
-                  <img
-                    src={currentUser.avatar}
-                    alt={currentUser.name || 'User'}
-                    className="w-7 h-7 rounded-full object-cover border border-white/20"
-                    onError={(e) => {
-                      e.currentTarget.style.display = 'none';
-                      if (e.currentTarget.nextSibling) {
-                        e.currentTarget.nextSibling.style.display = 'flex';
-                      }
-                    }}
-                  />
-                ) : null}
-                <div
-                  className={`w-7 h-7 rounded-full bg-gradient-to-tr from-redrob-blue to-redrob-violet flex items-center justify-center text-white font-mono text-xs font-bold ${
-                    currentUser?.avatar ? 'hidden' : 'flex'
-                  }`}
+            {/* Auth Area: Log In / Sign Up buttons if logged out, or Profile Dropdown if logged in */}
+            {!currentUser ? (
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={onOpenLogin}
+                  className="px-3 py-1 rounded-full text-[11px] font-sans font-bold text-slate-300 hover:text-white hover:bg-white/10 transition-all cursor-pointer border border-white/10"
                 >
-                  {currentRole === 'employee' ? 'EM' : currentRole === 'admin' ? 'AD' : (currentUser?.name || 'S').charAt(0).toUpperCase()}
-                </div>
-                <ChevronDown className="w-3 h-3 text-slate-400 pr-1" />
-              </button>
+                  Log In
+                </button>
+                <button
+                  onClick={onOpenSignUp}
+                  className="px-3 py-1 rounded-full bg-gradient-to-r from-redrob-blue to-[#1d3fe8] hover:shadow-redrob-glow text-white text-[11px] font-sans font-bold transition-all cursor-pointer"
+                >
+                  Sign Up
+                </button>
+              </div>
+            ) : (
+              <div className="relative">
+                <button
+                  onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                  className="flex items-center gap-2 p-1 pl-2 pr-2.5 rounded-full border border-white/10 hover:border-white/25 bg-[#0b1026] transition-all cursor-pointer shadow-sm"
+                >
+                  {currentUser?.avatar ? (
+                    <img
+                      src={currentUser.avatar}
+                      alt={currentUser.name || 'User'}
+                      className="w-6 h-6 rounded-full object-cover border border-white/20"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                        if (e.currentTarget.nextSibling) {
+                          e.currentTarget.nextSibling.style.display = 'flex';
+                        }
+                      }}
+                    />
+                  ) : null}
+                  <div
+                    className={`w-6 h-6 rounded-full bg-gradient-to-tr from-redrob-blue to-redrob-violet flex items-center justify-center text-white font-mono text-[10px] font-bold ${
+                      currentUser?.avatar ? 'hidden' : 'flex'
+                    }`}
+                  >
+                    {(currentUser?.name || 'U').charAt(0).toUpperCase()}
+                  </div>
+                  <span className="text-white text-xs font-bold font-sans max-w-[90px] truncate hidden md:inline">
+                    {currentUser?.name || 'Account'}
+                  </span>
+                  <ChevronDown className="w-3 h-3 text-slate-400" />
+                </button>
 
-              {isUserMenuOpen && (
-                <div className="absolute right-0 mt-2 w-56 rounded-2xl bg-[#0b1026] border border-white/10 shadow-redrob-card p-2 z-50 animate-fade-in text-xs">
-                  <div className="px-3 py-2 border-b border-white/10 flex items-center gap-2.5">
-                    {currentUser?.avatar && (
-                      <img
-                        src={currentUser.avatar}
-                        alt="Profile"
-                        className="w-8 h-8 rounded-full object-cover border border-white/20 shrink-0"
-                      />
-                    )}
-                    <div className="min-w-0 flex-1">
-                      <p className="text-white font-bold truncate">
-                        {currentRole === 'employee' ? 'David Miller' : (currentUser?.name || 'Shri')}
-                      </p>
-                      <p className="text-[11px] text-redrob-blue capitalize font-mono truncate">
-                        {currentRole === 'employee'
-                          ? 'Employee / Reporter'
-                          : currentRole === 'admin'
-                          ? 'System Administrator'
-                          : 'Lead Forensic Analyst'}
-                      </p>
+                {isUserMenuOpen && (
+                  <div className="absolute right-0 mt-2 w-64 rounded-2xl bg-[#0b1026] border border-white/15 shadow-redrob-card p-2 z-50 animate-fade-in text-xs">
+                    <div className="px-3 py-2.5 border-b border-white/10 flex items-center gap-2.5">
+                      {currentUser?.avatar ? (
+                        <img
+                          src={currentUser.avatar}
+                          alt="Profile"
+                          className="w-9 h-9 rounded-full object-cover border border-white/20 shrink-0"
+                        />
+                      ) : (
+                        <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-redrob-blue to-redrob-violet flex items-center justify-center text-white font-mono text-sm font-bold shrink-0">
+                          {(currentUser?.name || 'U').charAt(0).toUpperCase()}
+                        </div>
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5">
+                          <p className="text-white font-bold truncate">
+                            {currentUser?.name || 'User'}
+                          </p>
+                          {currentUser?.isDemo ? (
+                            <span className="text-[9px] font-mono px-1 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40">Demo</span>
+                          ) : (
+                            <span className="w-2 h-2 rounded-full bg-[#53e097] shrink-0" title="Live Account Active" />
+                          )}
+                        </div>
+                        <p className="text-[11px] text-slate-400 font-mono truncate">
+                          {currentUser?.email || 'No email attached'}
+                        </p>
+                        <p className="text-[10px] text-redrob-aqua font-mono truncate capitalize mt-0.5">
+                          {currentUser?.role || currentRole} • {currentUser?.org || 'TraceMail Security'}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="py-1">
+                      <button
+                        onClick={() => {
+                          onNavigate('settings');
+                          setIsUserMenuOpen(false);
+                        }}
+                        className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-slate-300 hover:text-white hover:bg-white/5 transition-all text-left"
+                      >
+                        <Settings className="w-4 h-4 text-slate-400" />
+                        <span>Security Settings</span>
+                      </button>
+                      <button
+                        onClick={() => {
+                          onNavigate('onboarding');
+                          setIsUserMenuOpen(false);
+                        }}
+                        className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-slate-300 hover:text-white hover:bg-white/5 transition-all text-left"
+                      >
+                        <ExternalLink className="w-4 h-4 text-slate-400" />
+                        <span>Org Setup Wizard</span>
+                      </button>
+                    </div>
+
+                    <div className="pt-1 border-t border-white/10">
+                      <button
+                        onClick={() => {
+                          setIsUserMenuOpen(false);
+                          onOpenLogout();
+                        }}
+                        className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-redrob-coral hover:bg-redrob-coral/10 transition-all text-left font-semibold"
+                      >
+                        <LogOut className="w-4 h-4" />
+                        <span>Log Out Session</span>
+                      </button>
                     </div>
                   </div>
-
-                  <div className="py-1">
-                    <button
-                      onClick={() => {
-                        onNavigate('settings');
-                        setIsUserMenuOpen(false);
-                      }}
-                      className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-slate-300 hover:text-white hover:bg-white/5 transition-all text-left"
-                    >
-                      <Settings className="w-4 h-4 text-slate-400" />
-                      <span>Security Settings</span>
-                    </button>
-                    <button
-                      onClick={() => {
-                        onNavigate('onboarding');
-                        setIsUserMenuOpen(false);
-                      }}
-                      className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-slate-300 hover:text-white hover:bg-white/5 transition-all text-left"
-                    >
-                      <ExternalLink className="w-4 h-4 text-slate-400" />
-                      <span>Org Setup Wizard</span>
-                    </button>
-                  </div>
-
-                  <div className="pt-1 border-t border-white/10">
-                    <button
-                      onClick={() => {
-                        setIsUserMenuOpen(false);
-                        onOpenLogout();
-                      }}
-                      className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-redrob-coral hover:bg-redrob-coral/10 transition-all text-left font-semibold"
-                    >
-                      <LogOut className="w-4 h-4" />
-                      <span>Log Out Session</span>
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>
