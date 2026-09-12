@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Navbar from './components/navigation/Navbar';
-import Sidebar from './components/navigation/Sidebar';
+
 import LandingScreen from './components/screens/LandingScreen';
 import AuthModal from './components/screens/AuthModal';
 import OnboardingScreen from './components/screens/OnboardingScreen';
@@ -81,8 +81,8 @@ export default function App() {
   const [authMode, setAuthMode] = useState('login');
   const [isLogoutOpen, setIsLogoutOpen] = useState(false);
   const [unreadAlerts, setUnreadAlerts] = useState(0);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isSidebarPinned, setIsSidebarPinned] = useState(false);
+
+
   const [toastMessage, setToastMessage] = useState(null);
   const [invalidRoute, setInvalidRoute] = useState('');
 
@@ -118,13 +118,8 @@ export default function App() {
     if (targetHash && window.location.hash !== targetHash) {
       window.history.pushState(null, '', targetHash);
     }
-    if (['dashboard', 'submit', 'cases', 'alerts', 'search', 'report', 'settings'].includes(currentScreen)) {
-      if (typeof window !== 'undefined' && window.innerWidth >= 1024) {
-        setIsSidebarOpen(true);
-        setIsSidebarPinned(true);
-      }
-    }
   }, [currentScreen]);
+
 
   // Helper to load user profile and data
   const loadUserData = (user) => {
@@ -229,16 +224,8 @@ export default function App() {
   }, []);
 
 
-  // Close sidebar on Escape key if open and not pinned
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (e.key === 'Escape' && isSidebarOpen && !isSidebarPinned) {
-        setIsSidebarOpen(false);
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isSidebarOpen, isSidebarPinned]);
+
+
 
   // Toast notification auto-dismiss
   useEffect(() => {
@@ -255,34 +242,28 @@ export default function App() {
   // Navigate when an option of the main menu is clicked
   const handleNavigate = (screenId) => {
     setCurrentScreen(screenId);
-    if (!isSidebarPinned) {
-      setIsSidebarOpen(false);
-    }
-  };
+      };
 
   // Switch sample email and run simulated scan
   const handleSelectSampleAndAnalyze = (sampleId) => {
     const found = MOCK_SAMPLES.find((s) => s.id === sampleId) || MOCK_SAMPLES[0];
     setSelectedSample(found);
     setCurrentScreen('loading');
-    if (!isSidebarPinned) setIsSidebarOpen(false);
-  };
+      };
 
   // Direct inspect without loading
   const handleDirectInspect = (sampleId) => {
     const found = MOCK_SAMPLES.find((s) => s.id === sampleId) || MOCK_SAMPLES[0];
     setSelectedSample(found);
     setCurrentScreen('result');
-    if (!isSidebarPinned) setIsSidebarOpen(false);
-  };
+      };
 
   // Upload or raw text analysis submission
   const handleAnalyzeSubmission = ({ sampleId }) => {
     const found = MOCK_SAMPLES.find((s) => s.id === sampleId) || MOCK_SAMPLES[0];
     setSelectedSample(found);
     setCurrentScreen('loading');
-    if (!isSidebarPinned) setIsSidebarOpen(false);
-  };
+      };
 
   // Action dispatch from Analysis Result
   const handleResultAction = (action) => {
@@ -335,8 +316,7 @@ export default function App() {
     });
     showToast(`Case ${newCaseId} successfully opened in Case Queue (New / Triage)!`);
     setCurrentScreen('cases');
-    if (!isSidebarPinned) setIsSidebarOpen(false);
-  };
+      };
 
   // Auth success callback - directly open Organization Setup Wizard ('onboarding')
   const handleAuthSuccess = (user) => {
@@ -387,7 +367,7 @@ export default function App() {
         </div>
       )}
 
-      {/* Top Persistent Navigation Bar with Main Menu Button & Status */}
+      {/* Top Persistent Navigation Bar */}
       <Navbar
         currentScreen={currentScreen}
         onNavigate={handleNavigate}
@@ -398,33 +378,14 @@ export default function App() {
         onOpenLogout={() => setIsLogoutOpen(true)}
         onOpenLogin={() => { setAuthMode('login'); setIsAuthOpen(true); }}
         onOpenSignUp={() => { setAuthMode('signup'); setIsAuthOpen(true); }}
-        isSidebarOpen={isSidebarOpen}
-        onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
         currentUser={currentUser}
       />
 
-      <div className="flex-1 flex relative z-10 pt-16">
-        {/* Left-Hand Side Navigation Sidebar (Shifted clickable options) */}
-        <Sidebar
-          isOpen={isSidebarOpen}
-          onClose={() => setIsSidebarOpen(false)}
-          isPinned={isSidebarPinned}
-          onTogglePin={() => setIsSidebarPinned(!isSidebarPinned)}
-          currentScreen={currentScreen}
-          onNavigate={handleNavigate}
-          currentRole={currentRole}
-          onRoleChange={setCurrentRole}
-          unreadAlertsCount={unreadAlerts}
-          onOpenSubmit={() => handleNavigate('submit')}
-          onOpenLogout={() => setIsLogoutOpen(true)}
-          currentUser={currentUser}
-        />
 
+      <div className="flex-1 flex relative z-10 pt-16">
         {/* Main Dynamic View Area: renders the selected whole tab */}
-        <main
-          className={`flex-1 min-w-0 transition-all duration-300 ${isSidebarPinned && isSidebarOpen ? 'lg:pl-72' : ''
-            }`}
-        >
+        <main className="flex-1 min-w-0">
+
           {/* 1. Landing Page */}
           {currentScreen === 'landing' && (
             <LandingScreen
@@ -471,9 +432,7 @@ export default function App() {
               alerts={alerts}
               onOpenSubmit={() => handleNavigate('submit')}
               onSelectSample={handleDirectInspect}
-              onNavigate={handleNavigate}
-              onToggleSidebar={() => setIsSidebarOpen((prev) => !prev)}
-            />
+              onNavigate={handleNavigate}            />
           )}
 
           {/* 5. Submit Email Screen */}
