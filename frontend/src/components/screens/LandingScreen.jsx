@@ -116,7 +116,7 @@ function ProductCard({ title, description, gradientFrom, gradientTo, overlayIcon
       gap={6}
       speed={40}
       className={`rounded-[20px] overflow-hidden cursor-pointer group`}
-      style={{ minHeight: '340px' }}
+      style={{ minHeight: '460px' }}
       onClick={onClick}
     >
       {/* Background gradient */}
@@ -507,8 +507,8 @@ export default function LandingScreen({
               gradientFrom="from-[#0a0f28]"
               gradientTo="to-[#1a2456]"
               overlayIcon={Cpu}
-              ctaLabel="Explore"
               badge="NEURAL NLP"
+              pixelColors="#4f6ef7,#3b82f6,#6366f1,#818cf8,#2b52ff"
               onClick={onStartAnalysis}
             />
             <ProductCard
@@ -517,8 +517,8 @@ export default function LandingScreen({
               gradientFrom="from-[#0d1a12]"
               gradientTo="to-[#1a3523]"
               overlayIcon={Globe2}
-              ctaLabel="Explore"
               badge="GEO TRACE"
+              pixelColors="#4ade80,#22c55e,#16a34a,#34d399,#00e3d8"
               onClick={onStartAnalysis}
             />
             <ProductCard
@@ -527,8 +527,8 @@ export default function LandingScreen({
               gradientFrom="from-[#1a0a28]"
               gradientTo="to-[#2d1555]"
               overlayIcon={Lock}
-              ctaLabel="Explore"
               badge="CRYPTOGRAPHY"
+              pixelColors="#a855f7,#9333ea,#c084fc,#7c3aed,#e879f9"
               onClick={onStartAnalysis}
             />
           </div>
@@ -541,8 +541,8 @@ export default function LandingScreen({
               gradientFrom="from-[#0a1528]"
               gradientTo="to-[#0d2140]"
               overlayIcon={Share2}
-              ctaLabel="Explore"
               badge="IOC CLUSTERING"
+              pixelColors="#38bdf8,#0ea5e9,#0284c7,#60a5fa,#2563eb"
               onClick={onStartAnalysis}
             />
             <ProductCard
@@ -551,8 +551,8 @@ export default function LandingScreen({
               gradientFrom="from-[#1a1208]"
               gradientTo="to-[#2e200e]"
               overlayIcon={FileCheck}
-              ctaLabel="Visit"
               badge="SOC WORKFLOW"
+              pixelColors="#f59e0b,#d97706,#fbbf24,#f97316,#fb923c"
               onClick={onOpenDashboard}
             />
             <ProductCard
@@ -561,11 +561,12 @@ export default function LandingScreen({
               gradientFrom="from-[#1a0808]"
               gradientTo="to-[#350f0f]"
               overlayIcon={AlertTriangle}
-              ctaLabel="Visit"
               badge="LIVE INTELLIGENCE"
+              pixelColors="#ef4444,#dc2626,#f87171,#e11d48,#fb7185"
               onClick={onOpenDashboard}
             />
           </div>
+
 
           {/* View More */}
           <div className="text-center mt-16 relative z-10">
