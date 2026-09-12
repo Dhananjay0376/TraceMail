@@ -227,7 +227,7 @@ export default function OnboardingScreen({ onCompleteOnboarding, onSkip, current
                     type="text"
                     value={orgName}
                     onChange={(e) => setOrgName(e.target.value)}
-                    placeholder="e.g. Acme Bank Security Team"
+                    placeholder=""
                     className={`w-full px-4 py-3 rounded-xl bg-[#050814] border text-white focus:outline-none text-xs transition-all ${
                       !orgName.trim() ? 'border-amber-500/40 focus:border-amber-400' : 'border-emerald-500/40 focus:border-emerald-400'
                     }`}
@@ -243,7 +243,7 @@ export default function OnboardingScreen({ onCompleteOnboarding, onSkip, current
                     type="text"
                     value={domain}
                     onChange={(e) => setDomain(e.target.value)}
-                    placeholder="e.g. acmebank.com"
+                    placeholder=""
                     className={`w-full px-4 py-3 rounded-xl bg-[#050814] border text-white focus:outline-none text-xs font-mono transition-all ${
                       !domain.trim() ? 'border-amber-500/40 focus:border-amber-400' : 'border-emerald-500/40 focus:border-emerald-400'
                     }`}
@@ -261,7 +261,7 @@ export default function OnboardingScreen({ onCompleteOnboarding, onSkip, current
                     type="text"
                     value={inviteCode}
                     onChange={(e) => setInviteCode(e.target.value)}
-                    placeholder="e.g. SEC-ACME-8924"
+                    placeholder=""
                     className={`w-full px-4 py-3 rounded-xl bg-[#050814] border text-white focus:outline-none text-xs font-mono uppercase tracking-widest transition-all ${
                       !inviteCode.trim() ? 'border-amber-500/40 focus:border-amber-400' : 'border-emerald-500/40 focus:border-emerald-400'
                     }`}
@@ -380,7 +380,7 @@ export default function OnboardingScreen({ onCompleteOnboarding, onSkip, current
                 type="email"
                 value={newEmailInput}
                 onChange={(e) => setNewEmailInput(e.target.value)}
-                placeholder="colleague@acmebank.com"
+                placeholder=""
                 className="flex-1 px-4 py-2.5 rounded-xl bg-[#050814] border border-white/10 text-white placeholder-slate-500 focus:border-redrob-blue focus:outline-none text-xs font-mono"
               />
               <select

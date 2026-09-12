@@ -301,7 +301,7 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess, initialMode 
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="analyst@acmebank.com"
+                    placeholder=""
                     className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#050814] border border-white/10 text-white placeholder-slate-500 focus:border-redrob-blue focus:outline-none focus:ring-1 focus:ring-redrob-blue/40 text-xs font-mono"
                   />
                 </div>
@@ -316,7 +316,7 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess, initialMode 
                     required
                     value={org}
                     onChange={(e) => setOrg(e.target.value)}
-                    placeholder="Acme Bank Security Team"
+                    placeholder=""
                     className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#050814] border border-white/10 text-white placeholder-slate-500 focus:border-redrob-blue focus:outline-none focus:ring-1 focus:ring-redrob-blue/40 text-xs"
                   />
                 </div>
