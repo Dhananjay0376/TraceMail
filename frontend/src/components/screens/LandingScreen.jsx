@@ -32,8 +32,8 @@ const heroSlides = [
     sub: 'Before It Reaches Your Workforce.',
     description:
       'Expose phishing, spoofing, and lookalike domains instantly. Reconstruct RFC 822 relay paths, audit DMARC cryptographic signatures, and generate court-ready forensic reports in seconds.',
-    bg: 'from-[#061B2E] via-[#0A3E66] to-[#061B2E]',
-    accent: '#2b52ff',
+    bg: 'from-[#061B2E] via-[#083B4B] to-[#061B2E]',
+    accent: '#00e3d8',
     product: 'Email Forensics',
   },
   {
@@ -52,8 +52,8 @@ const heroSlides = [
     sub: 'Unmask Coordinated Campaigns.',
     description:
       'Correlate isolated email threats into unified coordinated campaigns using graph network clustering and shared IOC fingerprints for total attribution.',
-    bg: 'from-[#061B2E] via-[#0A3E66] to-[#061B2E]',
-    accent: '#7c24ff',
+    bg: 'from-[#061B2E] via-[#083B4B] to-[#061B2E]',
+    accent: '#00e3d8',
     product: 'Campaign Attribution',
   },
 ];
@@ -271,9 +271,11 @@ export default function LandingScreen({
                 <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
                 <span className="text-xs font-mono font-bold text-cyan-300 tracking-wider">SIH 2024 EDITION</span>
               </div>
-              <h1 className="text-4xl sm:text-6xl lg:text-7xl font-extrabold text-white leading-[1.05] tracking-tight mb-4">
-                {slide.headline}
-                <span className="block font-serif italic font-light text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-500 mt-3 text-3xl sm:text-5xl lg:text-6xl drop-shadow-[0_0_15px_rgba(59,130,246,0.5)]">
+              <h1 className="mb-4">
+                <span className="block font-league uppercase tracking-wider text-5xl sm:text-7xl lg:text-8xl text-white font-normal leading-none drop-shadow-md">
+                  {slide.headline}
+                </span>
+                <span className="block font-besley italic font-medium text-3xl sm:text-5xl lg:text-6xl mt-3 leading-tight text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-sky-300 to-indigo-300 drop-shadow-[0_0_15px_rgba(0,227,216,0.35)]">
                   {slide.sub}
                 </span>
               </h1>
