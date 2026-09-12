@@ -207,3 +207,15 @@ def predict_text(text: str) -> Dict[str, Any]:
         "engine": "heuristic_fallback",
         "bec_cues": cues
     }
+
+
+def classify_email(text: str) -> Dict[str, Any]:
+    """Compatibility wrapper for endpoint returning label, confidence, and model_version."""
+    res = predict_text(text)
+    label_map = {"phishing": "Phishing", "legitimate": "Legitimate", "spam": "Spam", "bec": "BEC"}
+    raw_pred = res.get("prediction", "legitimate")
+    return {
+        "label": label_map.get(raw_pred, raw_pred.capitalize()),
+        "confidence": res.get("confidence", 0.95),
+        "model_version": res.get("engine", "distilbert")
+    }

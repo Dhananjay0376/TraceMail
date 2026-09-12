@@ -34,7 +34,6 @@ const heroSlides = [
       'Expose phishing, spoofing, and lookalike domains instantly. Reconstruct RFC 822 relay paths, audit DMARC cryptographic signatures, and generate court-ready forensic reports in seconds.',
     bg: 'from-[#061B2E] via-[#0A3E66] to-[#061B2E]',
     accent: '#2b52ff',
-    subGradient: 'from-blue-400 via-sky-300 to-cyan-300',
     product: 'Email Forensics',
   },
   {
@@ -45,7 +44,6 @@ const heroSlides = [
       'Reconstruct the full RFC 822 MTA relay path exposing proxy concealment, TOR exit nodes, and bulletproof ASNs with multi-hop IP geolocation intelligence.',
     bg: 'from-[#061B2E] via-[#083B4B] to-[#061B2E]',
     accent: '#00e3d8',
-    subGradient: 'from-cyan-400 via-teal-300 to-emerald-300',
     product: 'Geo Intelligence',
   },
   {
@@ -56,7 +54,6 @@ const heroSlides = [
       'Correlate isolated email threats into unified coordinated campaigns using graph network clustering and shared IOC fingerprints for total attribution.',
     bg: 'from-[#061B2E] via-[#0A3E66] to-[#061B2E]',
     accent: '#7c24ff',
-    subGradient: 'from-purple-400 via-fuchsia-300 to-indigo-300',
     product: 'Campaign Attribution',
   },
 ];
@@ -164,46 +161,26 @@ function ProductCard({ title, description, gradientFrom, gradientTo, overlayIcon
 // ─── FAQ Accordion Item ───────────────────────────────────────────────────────
 function FAQItem({ q, a, isOpen, onToggle }) {
   return (
-    <div className="border border-gray-200 rounded-2xl overflow-hidden">
+    <div className="border border-white/10 bg-white/5 backdrop-blur-md rounded-2xl overflow-hidden transition-all hover:border-cyan-500/30">
       <button
         onClick={onToggle}
-        className="w-full flex items-center justify-between px-6 py-5 text-left bg-white hover:bg-gray-50 transition-colors"
+        className="w-full flex items-center justify-between px-6 py-5 text-left transition-colors group"
       >
-        <span className="text-base font-semibold text-gray-900 pr-4">{q}</span>
-        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gray-900 flex items-center justify-center">
+        <span className="text-base font-semibold text-white/90 pr-4 group-hover:text-cyan-400 transition-colors">{q}</span>
+        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-white/10 border border-white/20 flex items-center justify-center group-hover:bg-cyan-500/20 group-hover:border-cyan-500/50 transition-all">
           {isOpen ? (
-            <Minus className="w-3.5 h-3.5 text-white" />
+            <Minus className="w-3.5 h-3.5 text-cyan-400" />
           ) : (
             <Plus className="w-3.5 h-3.5 text-white" />
           )}
         </div>
       </button>
       {isOpen && (
-        <div className="px-6 pb-5 bg-white">
-          <p className="text-sm text-gray-600 leading-relaxed">{a}</p>
+        <div className="px-6 pb-5">
+          <p className="text-sm text-white/60 leading-relaxed">{a}</p>
         </div>
       )}
     </div>
-  );
-}
-
-// ─── Formatted Description Renderer ──────────────────────────────────────────
-function FormattedDescription({ text }) {
-  const formatted = text
-    .replace(/(RFC 822)/g, '<code class="font-mono text-xs sm:text-sm px-1.5 py-0.5 rounded bg-cyan-950/80 border border-cyan-500/40 text-cyan-300 font-semibold">RFC 822</code>')
-    .replace(/(MTA relay path|relay paths)/g, '<span class="text-white font-medium">$1</span>')
-    .replace(/(TOR exit nodes)/g, '<code class="font-mono text-xs sm:text-sm px-1.5 py-0.5 rounded bg-amber-950/80 border border-amber-500/40 text-amber-300 font-semibold">TOR exit nodes</code>')
-    .replace(/(bulletproof ASNs)/g, '<code class="font-mono text-xs sm:text-sm px-1.5 py-0.5 rounded bg-red-950/80 border border-red-500/40 text-red-300 font-semibold">bulletproof ASNs</code>')
-    .replace(/(DMARC cryptographic signatures|DMARC)/g, '<code class="font-mono text-xs sm:text-sm px-1.5 py-0.5 rounded bg-blue-950/80 border border-blue-500/40 text-blue-300 font-semibold">$1</code>')
-    .replace(/(IP geolocation intelligence)/g, '<span class="text-white font-medium">$1</span>')
-    .replace(/(graph network clustering)/g, '<span class="text-white font-medium">$1</span>')
-    .replace(/(IOC fingerprints)/g, '<code class="font-mono text-xs sm:text-sm px-1.5 py-0.5 rounded bg-purple-950/80 border border-purple-500/40 text-purple-300 font-semibold">IOC fingerprints</code>');
-
-  return (
-    <p
-      className="mt-6 text-base sm:text-lg text-slate-300 max-w-2xl leading-relaxed font-sans"
-      dangerouslySetInnerHTML={{ __html: formatted }}
-    />
   );
 }
 
@@ -263,7 +240,7 @@ export default function LandingScreen({
   const slide = heroSlides[currentSlide];
 
   return (
-    <div className="min-h-screen bg-[#061B2E] text-gray-900 font-sans">
+    <div className="min-h-screen bg-[#02050A] text-white font-sans selection:bg-cyan-500/30 selection:text-cyan-300">
 
       {/* ════════════════════════════════════════════════════════════
           SECTION 1 · HERO CAROUSEL — Dark Cinematic
@@ -287,49 +264,96 @@ export default function LandingScreen({
 
         <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-8 pt-4 pb-12 flex flex-col min-h-screen">
 
-          {/* Main headline — authentic, high-impact cybersecurity typography */}
-          <div className="flex-1 flex flex-col justify-center">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/5 border border-white/10 backdrop-blur-md mb-6 w-fit shadow-inner">
-              <span className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: slide.accent }} />
-              <span className="font-mono text-xs uppercase tracking-widest font-bold text-slate-200">
-                {slide.label}
-              </span>
+          <div className="flex-1 flex flex-col lg:flex-row items-center gap-12">
+            {/* Main headline — massive editorial typography */}
+            <div className="flex-1 flex flex-col justify-center max-w-2xl relative z-20">
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-cyan-500/30 bg-cyan-500/10 w-fit mb-6 shadow-[0_0_15px_rgba(6,182,212,0.2)]">
+                <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
+                <span className="text-xs font-mono font-bold text-cyan-300 tracking-wider">SIH 2024 EDITION</span>
+              </div>
+              <h1 className="text-4xl sm:text-6xl lg:text-7xl font-extrabold text-white leading-[1.05] tracking-tight mb-4">
+                {slide.headline}
+                <span className="block font-serif italic font-light text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-500 mt-3 text-3xl sm:text-5xl lg:text-6xl drop-shadow-[0_0_15px_rgba(59,130,246,0.5)]">
+                  {slide.sub}
+                </span>
+              </h1>
+
+              <p className="mt-8 text-base sm:text-lg text-white/60 leading-relaxed font-sans max-w-xl">
+                {slide.description}
+              </p>
+
+              {/* CTA Buttons */}
+              <div className="mt-10 flex flex-wrap items-center gap-4">
+                <button
+                  onClick={onOpenSignUp || (() => onOpenAuth && onOpenAuth('signup'))}
+                  className="flex items-center gap-2 px-8 py-4 rounded-full bg-white text-black font-bold text-sm uppercase tracking-wider hover:bg-white/90 transition-all shadow-xl cursor-pointer"
+                >
+                  <UploadCloud className="w-4 h-4" />
+                  Sign Up Free
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={onStartAnalysis}
+                  className="flex items-center gap-2 px-7 py-4 rounded-full border border-white/20 text-white/90 hover:border-white/50 hover:text-white font-semibold text-sm transition-all cursor-pointer"
+                >
+                  <Play className="w-3.5 h-3.5 text-redrob-aqua" />
+                  Try Interactive Scan
+                </button>
+                <button
+                  onClick={onRequestDemo || (() => onOpenAuth && onOpenAuth('demo'))}
+                  className="px-6 py-4 rounded-full text-white/50 hover:text-white text-sm transition-all font-sans cursor-pointer"
+                >
+                  Request Enterprise Demo
+                </button>
+              </div>
             </div>
 
-            <h1 className="mb-2">
-              <span className="block font-league uppercase tracking-wider text-5xl sm:text-7xl lg:text-8xl text-white font-normal leading-none drop-shadow-md">
-                {slide.headline}
-              </span>
-              <span className={`block font-besley font-medium text-2xl sm:text-4xl lg:text-5xl mt-3 leading-tight bg-gradient-to-r ${slide.subGradient || 'from-cyan-400 to-blue-400'} bg-clip-text text-transparent`}>
-                {slide.sub}
-              </span>
-            </h1>
+            {/* Right Side - Interactive Globe Element */}
+            <div 
+              className="hidden lg:flex flex-1 justify-center items-center relative w-full max-w-[600px] aspect-square group"
+              onMouseMove={(e) => {
+                const rect = e.currentTarget.getBoundingClientRect();
+                const x = (e.clientX - rect.left - rect.width / 2) / 20;
+                const y = (e.clientY - rect.top - rect.height / 2) / 20;
+                const vid = e.currentTarget.querySelector('video');
+                if (vid) vid.style.transform = `translate(${x}px, ${y}px) scale(1.05)`;
+              }}
+              onMouseLeave={(e) => {
+                const vid = e.currentTarget.querySelector('video');
+                if (vid) vid.style.transform = `translate(0px, 0px) scale(1)`;
+              }}
+            >
+              {/* Animated outer rings - Glow reduced */}
+              <div className="absolute inset-2 rounded-full border border-cyan-500/10 shadow-[0_0_30px_rgba(6,182,212,0.05)] animate-[spin_60s_linear_infinite] pointer-events-none" />
+              <div className="absolute inset-8 rounded-full border border-blue-500/5 animate-[spin_40s_linear_infinite_reverse] pointer-events-none" />
+              
+              {/* The Globe Core */}
+              <div className="relative w-[85%] h-[85%] rounded-full overflow-hidden shadow-[0_0_40px_rgba(43,82,255,0.15)] border border-white/5 flex items-center justify-center">
+                <video
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  className="absolute w-[180%] h-[180%] max-w-none object-cover opacity-90 mix-blend-screen pointer-events-none"
+                  style={{ 
+                    filter: 'contrast(1.2) brightness(1.1) hue-rotate(-10deg)',
+                    transition: 'transform 0.2s ease-out'
+                  }}
+                >
+                  <source src="/bg_video.mp4" type="video/mp4" />
+                </video>
+                
+                {/* Inner shadow */}
+                <div className="absolute inset-0 rounded-full shadow-[inset_-30px_-30px_70px_rgba(0,0,0,0.9),inset_30px_30px_70px_rgba(255,255,255,0.1)] pointer-events-none mix-blend-multiply" />
+                <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-transparent via-white/5 to-white/10 pointer-events-none" />
+              </div>
 
-            <FormattedDescription text={slide.description} />
-
-            {/* CTA Buttons */}
-            <div className="mt-10 flex flex-wrap items-center gap-4">
-              <button
-                onClick={onOpenSignUp || (() => onOpenAuth && onOpenAuth('signup'))}
-                className="flex items-center gap-2 px-8 py-4 rounded-full bg-white text-black font-bold text-sm uppercase tracking-wider hover:bg-white/90 transition-all shadow-xl cursor-pointer"
-              >
-                <UploadCloud className="w-4 h-4" />
-                Sign Up Free
-                <ArrowRight className="w-4 h-4" />
-              </button>
-              <button
-                onClick={onStartAnalysis}
-                className="flex items-center gap-2 px-7 py-4 rounded-full border border-white/20 text-white/90 hover:border-white/50 hover:text-white font-semibold text-sm transition-all cursor-pointer"
-              >
-                <Play className="w-3.5 h-3.5 text-redrob-aqua" />
-                Try Interactive Scan
-              </button>
-              <button
-                onClick={onRequestDemo || (() => onOpenAuth && onOpenAuth('demo'))}
-                className="px-6 py-4 rounded-full text-white/50 hover:text-white text-sm transition-all font-sans cursor-pointer"
-              >
-                Request Enterprise Demo
-              </button>
+              {/* Floating tech accents */}
+              <div className="absolute top-[15%] right-[10%] w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_10px_rgba(34,211,238,0.5)] animate-ping pointer-events-none" />
+              <div className="absolute bottom-[25%] left-[15%] w-1.5 h-1.5 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)] animate-pulse pointer-events-none" />
+              
+              {/* Center glow behind - reduced */}
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[70%] h-[70%] bg-blue-500/10 blur-[80px] rounded-full pointer-events-none -z-10" />
             </div>
           </div>
 
@@ -405,49 +429,42 @@ export default function LandingScreen({
       {/* ════════════════════════════════════════════════════════════
           MARQUEE TICKER (between hero and trust)
       ════════════════════════════════════════════════════════════ */}
-      <div className="relative z-20 bg-white border-y border-gray-100 py-2">
+      <div className="relative z-20 bg-[#02050A]/80 backdrop-blur-xl border-y border-white/10 py-3 shadow-[0_0_30px_rgba(0,0,0,0.5)]">
         <MarqueeTicker />
       </div>
 
       {/* ════════════════════════════════════════════════════════════
           SECTION 2 · TRUST BANNER — Horizontal Straight Loop
       ════════════════════════════════════════════════════════════ */}
-      <section className="bg-white py-16 border-b border-gray-100 overflow-hidden">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8 text-center mb-8">
-          <p className="text-gray-500 text-base font-sans">
-            Trusted by Organizations. Built for Cyber Defenders.
+      <section className="bg-[#040A15] relative py-16 border-b border-white/5 overflow-hidden">
+        {/* Glow */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-px bg-gradient-to-r from-transparent via-cyan-500/50 to-transparent" />
+        
+        <div className="max-w-7xl mx-auto px-6 lg:px-8 text-center mb-10">
+          <p className="text-cyan-400 text-sm font-mono tracking-widest uppercase font-bold">
+            Trusted by Elite Cyber Defenders
           </p>
         </div>
-        <div className="w-full overflow-hidden marquee-mask">
+        <div className="w-full overflow-hidden mask-horizontal">
           <div className="flex w-max animate-marquee hover:[animation-play-state:paused] gap-12 sm:gap-16 items-center py-2">
             {[
-              'Accenture',
-              'Deloitte',
-              'IBM Security',
-              'Cisco',
-              'PwC',
-              'KPMG',
-              'CrowdStrike',
-              'Accenture',
-              'Deloitte',
-              'IBM Security',
-              'Cisco',
-              'PwC',
-              'KPMG',
-              'CrowdStrike',
-              'Accenture',
-              'Deloitte',
-              'IBM Security',
-              'Cisco',
-              'PwC',
-              'KPMG',
-              'CrowdStrike',
+              'Indian Cyber Crime Coordination',
+              'CBI Cyber Cell',
+              'CERT-In',
+              'NCIIPC',
+              'Defense Cyber Agency',
+              'Data Security Council of India',
+              'Indian Cyber Crime Coordination',
+              'CBI Cyber Cell',
+              'CERT-In',
+              'NCIIPC',
+              'Defense Cyber Agency',
             ].map((name, idx) => (
-              <div key={idx} className="flex items-center gap-12 sm:gap-16 shrink-0 opacity-70 hover:opacity-100 transition-opacity cursor-default">
-                <span className="text-gray-900 font-bold text-xl sm:text-2xl tracking-tight font-sans">
+              <div key={idx} className="flex items-center gap-12 sm:gap-16 shrink-0 opacity-50 hover:opacity-100 hover:text-cyan-400 transition-all cursor-default">
+                <span className="font-bold text-xl sm:text-2xl tracking-tight font-sans">
                   {name}
                 </span>
-                <span className="w-2 h-2 rounded-full bg-blue-500/40" />
+                <span className="w-2 h-2 rounded-full bg-blue-500/40 shadow-[0_0_10px_rgba(59,130,246,0.8)]" />
               </div>
             ))}
           </div>
@@ -455,22 +472,32 @@ export default function LandingScreen({
       </section>
 
       {/* ════════════════════════════════════════════════════════════
-          SECTION 3 · PRODUCT SUITE GRID — White with dark cards
+          SECTION 3 · PRODUCT SUITE GRID — Ultra Dark Glassmorphic
       ════════════════════════════════════════════════════════════ */}
-      <section className="bg-white py-20">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8">
+      <section className="relative bg-[#02050A] py-28 overflow-hidden">
+        {/* Ambient background grid and glow */}
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-1/4 left-0 w-[50vw] h-[50vw] bg-purple-600/5 blur-[150px] rounded-full -translate-x-1/2" />
+          <div className="absolute bottom-0 right-0 w-[40vw] h-[40vw] bg-cyan-600/5 blur-[150px] rounded-full translate-x-1/3 translate-y-1/3" />
+          <div className="absolute inset-0 opacity-[0.02]" style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,1) 1px, transparent 1px)', backgroundSize: '60px 60px' }} />
+        </div>
+
+        <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-8">
           {/* Section header */}
-          <div className="mb-12">
-            <h2 className="text-5xl sm:text-6xl font-extrabold text-gray-900 tracking-tight mb-3">
+          <div className="mb-16">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-purple-500/30 bg-purple-500/10 mb-4">
+              <span className="text-[10px] font-mono font-bold text-purple-300 tracking-wider">CORE ARSENAL</span>
+            </div>
+            <h2 className="text-5xl sm:text-6xl font-extrabold text-white tracking-tight mb-4">
               Our Forensic Suite
             </h2>
-            <p className="text-gray-500 text-base max-w-xl">
+            <p className="text-white/60 text-lg max-w-2xl font-sans leading-relaxed">
               Explore tools built for email security, threat attribution, compliance, and real-time intelligence.
             </p>
-            <div className="mt-6 flex items-center gap-4">
+            <div className="mt-8 flex items-center gap-4">
               <button
                 onClick={onStartAnalysis}
-                className="px-6 py-3 rounded-full bg-gray-900 text-white text-sm font-bold hover:bg-gray-800 transition-all"
+                className="px-8 py-3.5 rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 text-white text-sm font-bold shadow-[0_0_20px_rgba(6,182,212,0.3)] hover:shadow-[0_0_30px_rgba(6,182,212,0.5)] hover:scale-105 transition-all"
               >
                 Explore TraceMail
               </button>
@@ -546,12 +573,12 @@ export default function LandingScreen({
           </div>
 
           {/* View More */}
-          <div className="text-center mt-12">
+          <div className="text-center mt-16 relative z-10">
             <button
               onClick={onOpenDashboard}
-              className="px-10 py-3.5 rounded-full border-2 border-gray-900 text-gray-900 font-bold text-sm hover:bg-gray-900 hover:text-white transition-all"
+              className="px-10 py-3.5 rounded-full border border-cyan-500/40 text-cyan-400 font-bold text-sm bg-cyan-500/5 hover:bg-cyan-500/10 hover:shadow-[0_0_20px_rgba(6,182,212,0.3)] transition-all"
             >
-              View More
+              View More Capabilities
             </button>
           </div>
         </div>
@@ -660,37 +687,39 @@ export default function LandingScreen({
       </section>
 
       {/* ════════════════════════════════════════════════════════════
-          SECTION 5 · STATS COUNTER — White, massive typography
+          SECTION 5 · STATS COUNTER — Neon Cyberpunk
       ════════════════════════════════════════════════════════════ */}
-      <section className="bg-white py-24" ref={statsRef}>
-        <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <p className="text-gray-600 text-lg font-sans mb-4 max-w-lg leading-snug">
-            Security Teams Detecting Threats Faster, Smarter, and with Total Forensic Confidence Through TraceMail.
+      <section className="relative bg-[#010308] py-32 border-y border-white/5" ref={statsRef}>
+        <div className="absolute inset-0 pointer-events-none opacity-20" style={{ backgroundImage: 'radial-gradient(circle at center, rgba(6,182,212,0.3) 0%, transparent 60%)' }} />
+        
+        <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-8 text-center">
+          <p className="text-cyan-400 text-lg font-mono mb-6 uppercase tracking-widest font-bold">
+            Live Global Impact
           </p>
           {/* Massive counter number */}
           <div className="overflow-hidden">
             <p
-              className="text-[clamp(80px,15vw,180px)] font-extrabold text-gray-900 leading-none tracking-tight"
+              className="text-[clamp(60px,12vw,160px)] font-extrabold text-transparent bg-clip-text bg-gradient-to-b from-white via-cyan-100 to-blue-900 leading-none tracking-tight filter drop-shadow-[0_0_30px_rgba(6,182,212,0.4)]"
               style={{ fontVariantNumeric: 'tabular-nums' }}
             >
               {formatCount(displayCount)}
             </p>
           </div>
-          <p className="text-gray-500 text-xl font-sans mt-2">
-            Email threats analyzed and neutralized.
+          <p className="text-white/60 text-xl font-sans mt-6 max-w-xl mx-auto">
+            Email threats analyzed, clustered, and neutralized by our AI engine.
           </p>
 
           {/* Supporting stats row */}
-          <div className="mt-16 grid grid-cols-2 lg:grid-cols-4 gap-8 border-t border-gray-100 pt-10">
+          <div className="mt-20 grid grid-cols-2 lg:grid-cols-4 gap-8">
             {[
-              { value: '99.7%', label: 'Forensic accuracy rate' },
-              { value: '<50ms', label: 'Analysis latency' },
-              { value: '500+', label: 'Organizations protected' },
-              { value: '24/7', label: 'Live threat monitoring' },
+              { value: '99.7%', label: 'Forensic accuracy rate', color: 'text-cyan-400' },
+              { value: '<50ms', label: 'Analysis latency', color: 'text-purple-400' },
+              { value: '500+', label: 'Organizations protected', color: 'text-blue-400' },
+              { value: '24/7', label: 'Live threat monitoring', color: 'text-emerald-400' },
             ].map((stat) => (
-              <div key={stat.label}>
-                <p className="text-4xl font-extrabold text-gray-900 mb-1">{stat.value}</p>
-                <p className="text-sm text-gray-500 font-sans">{stat.label}</p>
+              <div key={stat.label} className="p-6 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md hover:bg-white/10 transition-colors">
+                <p className={`text-5xl font-extrabold ${stat.color} mb-3 drop-shadow-md`}>{stat.value}</p>
+                <p className="text-sm text-white/50 font-sans uppercase tracking-wider">{stat.label}</p>
               </div>
             ))}
           </div>
@@ -698,21 +727,27 @@ export default function LandingScreen({
       </section>
 
       {/* ════════════════════════════════════════════════════════════
-          SECTION 6 · HOW IT WORKS — 3-Step triaging pipeline
+          SECTION 6 · HOW IT WORKS — Dark Glassmorphic Pipeline
       ════════════════════════════════════════════════════════════ */}
-      <section className="bg-gray-50 py-24 border-y border-gray-100">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <Pill color="violet">Triaging Pipeline</Pill>
-            <h2 className="text-4xl sm:text-5xl font-extrabold text-gray-900 mt-4">
+      <section className="relative bg-[#02050A] py-32 overflow-hidden">
+        <div className="absolute inset-0 bg-[url('/grid-pattern.svg')] opacity-[0.05]" />
+        
+        <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-8">
+          <div className="text-center mb-20">
+            <Pill color="aqua">Triaging Pipeline</Pill>
+            <h2 className="text-4xl sm:text-5xl font-extrabold text-white mt-6">
               From Suspicious Inbox to Court-Ready Dossier
             </h2>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
+            {/* Connecting line for desktop */}
+            <div className="hidden md:block absolute top-[50%] left-0 w-full h-0.5 bg-gradient-to-r from-cyan-500/0 via-cyan-500/40 to-cyan-500/0 -z-10" />
+            
             {[
               {
                 step: '01',
-                title: 'Ingest Suspicious Mail',
+                title: 'Ingest Mail',
                 desc: 'Drag-and-drop any .eml / .msg file or paste raw RFC headers directly from Outlook or Gmail.',
                 icon: UploadCloud,
               },
@@ -725,21 +760,21 @@ export default function LandingScreen({
               {
                 step: '03',
                 title: 'Contain & Neutralize',
-                desc: 'Obtain an instant score /100, export audit-ready PDF dossiers, and push 1-click gateway firewall block rules.',
+                desc: 'Obtain an instant score /100, export audit-ready PDF dossiers, and push 1-click gateway block rules.',
                 icon: ShieldAlert,
               },
-            ].map((st) => {
+            ].map((st, i) => {
               const Icon = st.icon;
               return (
-                <div key={st.step} className="bg-white rounded-3xl p-8 border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
-                  <div className="flex items-center justify-between mb-6">
-                    <span className="text-5xl font-extrabold text-gray-100">{st.step}</span>
-                    <div className="w-12 h-12 rounded-2xl bg-gray-900 flex items-center justify-center">
-                      <Icon className="w-5 h-5 text-white" />
+                <div key={st.step} className="bg-[#050B14]/80 backdrop-blur-xl rounded-3xl p-8 border border-white/10 shadow-[0_8px_30px_rgba(0,0,0,0.5)] hover:border-cyan-500/30 hover:shadow-[0_0_40px_rgba(6,182,212,0.15)] hover:-translate-y-2 transition-all duration-300 group">
+                  <div className="flex items-center justify-between mb-8">
+                    <span className="text-5xl font-extrabold text-white/10 group-hover:text-cyan-500/20 transition-colors">{st.step}</span>
+                    <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center group-hover:bg-cyan-500/20 group-hover:border-cyan-500/50 transition-all">
+                      <Icon className="w-6 h-6 text-cyan-400" />
                     </div>
                   </div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-3">{st.title}</h3>
-                  <p className="text-sm text-gray-500 leading-relaxed">{st.desc}</p>
+                  <h3 className="text-xl font-bold text-white mb-4">{st.title}</h3>
+                  <p className="text-sm text-white/60 leading-relaxed">{st.desc}</p>
                 </div>
               );
             })}
@@ -748,42 +783,32 @@ export default function LandingScreen({
       </section>
 
       {/* ════════════════════════════════════════════════════════════
-          SECTION 7 · FAQ — Split layout (redrob style)
+          SECTION 7 · FAQ — Dark Cyber Theme
       ════════════════════════════════════════════════════════════ */}
-      <section className="bg-white py-24">
+      <section className="bg-[#010308] py-32 border-t border-white/5">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-16">
             {/* Left panel */}
             <div className="lg:col-span-2">
-              <h2 className="text-5xl font-extrabold text-gray-900 leading-tight mb-2">
+              <h2 className="text-5xl font-extrabold text-white leading-tight mb-2">
                 Frequently
               </h2>
-              <h2 className="text-5xl font-serif italic font-light text-gray-900 leading-tight mb-6">
+              <h2 className="text-5xl font-serif italic font-light text-cyan-400 leading-tight mb-6">
                 Asked Questions
               </h2>
-              <p className="text-gray-500 text-base mb-10">
-                Have questions? We've answered the ones people ask most about TraceMail.
+              <p className="text-white/50 text-base mb-10 leading-relaxed">
+                Have questions? We've answered the ones people ask most about TraceMail's SIH implementation.
               </p>
 
               {/* "Still have questions?" card */}
-              <div className="bg-gray-50 border border-gray-100 rounded-3xl p-7">
-                {/* Avatar cluster */}
-                <div className="flex items-center gap-1 mb-5">
-                  {['#2b52ff', '#7c24ff', '#00e3d8', '#ff4050'].map((color, i) => (
-                    <div
-                      key={i}
-                      className="w-9 h-9 rounded-full border-2 border-white flex items-center justify-center text-white text-xs font-bold"
-                      style={{ background: color, marginLeft: i > 0 ? '-8px' : 0 }}
-                    >
-                      {['AC', 'JD', 'SK', 'You'][i]}
-                    </div>
-                  ))}
-                </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-2">Still have questions?</h3>
-                <p className="text-sm text-gray-500 mb-6">Reach out, and our security team will guide you.</p>
+              <div className="bg-white/5 border border-white/10 backdrop-blur-md rounded-3xl p-8 relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/20 blur-[50px] rounded-full" />
+                
+                <h3 className="text-xl font-bold text-white mb-2 relative z-10">Still have questions?</h3>
+                <p className="text-sm text-white/50 mb-8 relative z-10">Reach out, and our security team will guide you.</p>
                 <button
                   onClick={onOpenAuth}
-                  className="w-full px-5 py-3 rounded-full bg-gray-900 text-white font-bold text-sm hover:bg-gray-800 transition-all"
+                  className="w-full px-5 py-3.5 rounded-xl bg-white text-black font-bold text-sm hover:bg-cyan-400 transition-all relative z-10"
                 >
                   Talk To Our Team
                 </button>
@@ -791,7 +816,7 @@ export default function LandingScreen({
             </div>
 
             {/* Right accordion list */}
-            <div className="lg:col-span-3 space-y-3">
+            <div className="lg:col-span-3 space-y-4">
               {faqs.map((item, i) => (
                 <FAQItem
                   key={i}
@@ -866,8 +891,27 @@ export default function LandingScreen({
       {/* ════════════════════════════════════════════════════════════
           SECTION 9 · FOOTER — Dark mega-nav
       ════════════════════════════════════════════════════════════ */}
-      <footer className="bg-[#050814] border-t border-white/10 py-16">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8">
+      <footer className="relative bg-[#050814] border-t border-white/10 py-16 overflow-hidden">
+        {/* Footer Background Ambient Effects */}
+        <div className="absolute inset-0 pointer-events-none">
+          {/* Bottom left blue glow */}
+          <div className="absolute bottom-0 left-[10%] w-[600px] h-[600px] bg-blue-600/10 blur-[150px] rounded-full translate-y-1/3" />
+          {/* Top right cyan glow */}
+          <div className="absolute top-0 right-[15%] w-[400px] h-[400px] bg-cyan-500/5 blur-[120px] rounded-full -translate-y-1/2" />
+          {/* Subtle Tech Grid */}
+          <div className="absolute inset-0 opacity-[0.03]"
+            style={{
+              backgroundImage: 'linear-gradient(rgba(255, 255, 255, 1) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 1) 1px, transparent 1px)',
+              backgroundSize: '40px 40px'
+            }}
+          />
+          {/* Scanline overlay */}
+          <div className="absolute inset-0 opacity-10 mix-blend-overlay"
+            style={{ backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.5) 2px, rgba(0,0,0,0.5) 4px)' }}
+          />
+        </div>
+
+        <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-8">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-12 mb-16">
             {/* Brand */}
             <div className="lg:col-span-2">

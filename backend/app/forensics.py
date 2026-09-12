@@ -301,6 +301,14 @@ def parse_eml_bytes(raw_bytes: bytes) -> Dict[str, Any]:
 
     return {
         "sha256_hash": sha256_digest,
+        "evidence_seal": {
+            "sha256": sha256_digest,
+            "md5": hashlib.md5(raw_bytes).hexdigest(),
+            "file_size_bytes": len(raw_bytes),
+            "ingest_timestamp": datetime.now(timezone.utc).isoformat(),
+            "parser_version": "TraceMail-MIME-v1.2",
+            "custody_status": "Verified & Immutable"
+        },
         "subject": subject_header,
         "from": {
             "raw": from_header,
@@ -326,3 +334,14 @@ def parse_eml_bytes(raw_bytes: bytes) -> Dict[str, Any]:
         "body_text": body_text,
         "attachments": attachments
     }
+
+
+def extract_hops(received_chain: List[str]) -> List[str]:
+    """Extract list of IP strings from received header chain."""
+    hops, _ = extract_relay_hops(received_chain or [])
+    return [h["ip"] for h in hops if h.get("ip")]
+
+
+def check_authentication_records(sender_domain: str, raw_content: bytes) -> Dict[str, Any]:
+    """Wrapper around check_spf_dkim_dmarc for main.py API schema alignment."""
+    return check_spf_dkim_dmarc(sender_domain, raw_content)

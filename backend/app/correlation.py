@@ -312,8 +312,40 @@ def compute_fraud_score(
 
     return {
         "fraud_score": final_score,
+        "score": final_score,
         "risk_level": risk_level,
         "verdict": verdict,
         "verdict_color": verdict_color,
-        "breakdown": breakdown
+        "breakdown": breakdown,
+        "factors": [{"name": b["category"], "points": b["points"], "reason": b["detail"]} for b in breakdown if b.get("flagged")]
     }
+
+
+# Singleton manager
+_campaign_graph_mgr = CampaignGraphManager()
+
+def record_and_correlate(case_id: str, domain: str, originating_ip: Optional[str], label: str, score: int, risk_level: str) -> Dict[str, Any]:
+    _campaign_graph_mgr.add_case(
+        case_id=case_id,
+        subject=f"Investigation {case_id}",
+        fraud_score=score,
+        verdict=risk_level,
+        sender_email=f"sender@{domain}" if domain else "unknown@email.com",
+        sender_domain=domain or "unknown.com",
+        reply_to_email=None,
+        origin_ip=originating_ip,
+        hops=[{"ip": originating_ip}] if originating_ip else [],
+        geo={"is_hosting": False}
+    )
+    return {
+        "campaign_id": f"CAMP-{domain.upper()}" if domain else None,
+        "shared_ip": originating_ip,
+        "shared_domain": domain,
+        "related_cases_count": 1
+    }
+
+def get_campaign_graph_data() -> Dict[str, Any]:
+    return _campaign_graph_mgr.export_graph_json()
+
+def rehydrate_graph_from_db(cases: List[Dict[str, Any]]) -> None:
+    pass

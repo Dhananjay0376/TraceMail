@@ -86,6 +86,11 @@ export default function App() {
   const [toastMessage, setToastMessage] = useState(null);
   const [invalidRoute, setInvalidRoute] = useState('');
 
+  // Force update document.title to TraceMail on app mount
+  useEffect(() => {
+    document.title = "TraceMail | AI Email Forensics & Origin Traceability";
+  }, []);
+
   // Sync URL hash → screen when browser back/forward is used
   useEffect(() => {
     const handleHashChange = () => {
