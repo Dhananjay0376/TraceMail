@@ -295,32 +295,74 @@ def parse_eml_bytes(raw_bytes: bytes) -> Dict[str, Any]:
         reply_to=reply_to_header,
         origin_ip=earliest_origin_ip
     )
-    
+
     body_text = extract_body(msg)
     attachments = extract_attachments(msg)
 
+    # Build extracted_urls list from body (simple regex scan)
+    url_pattern = re.compile(r'https?://[^\s<>"\']+', re.IGNORECASE)
+    raw_urls = url_pattern.findall(body_text)
+    extracted_urls = []
+    for url in raw_urls:
+        domain_match = re.search(r'https?://([^/?\s]+)', url)
+        url_domain = domain_match.group(1) if domain_match else ""
+        is_ip = bool(re.match(r'\d+\.\d+\.\d+\.\d+', url_domain))
+        is_sus = is_ip or any(url_domain.endswith(tld) for tld in ['.ru', '.xyz', '.top', '.biz', '.tk', '.pw', '.club', '.vip'])
+        extracted_urls.append({
+            "url": url,
+            "domain": url_domain,
+            "is_ip_based": is_ip,
+            "is_shortened": False,
+            "is_mismatched_anchor": False,
+            "anchor_text": None,
+            "risk_score": 0.8 if is_sus else 0.1,
+            "threat_flags": ["ip_url" if is_ip else ""],
+            "is_suspicious": is_sus,
+        })
+
+    # Build attachment list with legacy fields
+    legacy_attachments = []
+    SUSPICIOUS_EXTS = re.compile(r'\.(?:exe|vbs|bat|scr|cmd|ps1|iso|js|jar|zip|rar)$', re.IGNORECASE)
+    for att in attachments:
+        payload_bytes = att.get("_payload", b"") if isinstance(att, dict) else b""
+        sha = hashlib.sha256(payload_bytes).hexdigest() if payload_bytes else "0" * 64
+        is_sus_ext = bool(SUSPICIOUS_EXTS.search(att.get("filename", "")))
+        legacy_attachments.append({
+            "filename": att.get("filename", "untitled"),
+            "content_type": att.get("content_type", "application/octet-stream"),
+            "size_bytes": att.get("size_bytes", 0),
+            "sha256": sha,
+            "is_suspicious_extension": is_sus_ext,
+            "is_suspicious": is_sus_ext,
+            "threat_level": "Suspicious" if is_sus_ext else "Safe",
+        })
+
+    # Evidence seal
+    evidence_seal = {
+        "sha256": sha256_digest,
+        "md5": hashlib.md5(raw_bytes).hexdigest(),
+        "file_size_bytes": len(raw_bytes),
+        "ingest_timestamp": datetime.utcnow().isoformat() + "Z",
+        "parser_version": "TraceMail-MIME-v1.2",
+        "custody_status": "Verified & Immutable",
+    }
+
     return {
-        "sha256_hash": sha256_digest,
-        "evidence_seal": {
-            "sha256": sha256_digest,
-            "md5": hashlib.md5(raw_bytes).hexdigest(),
-            "file_size_bytes": len(raw_bytes),
-            "ingest_timestamp": datetime.now(timezone.utc).isoformat(),
-            "parser_version": "TraceMail-MIME-v1.2",
-            "custody_status": "Verified & Immutable"
-        },
-        "subject": subject_header,
-        "from": {
-            "raw": from_header,
-            "display_name": parsed_name,
-            "email": parsed_addr,
-            "domain": anomalies["sender_domain"]
-        },
-        "to": to_header,
-        "date": date_header,
-        "message_id": message_id_header,
+        # Legacy keys (used by mailbox_worker + main)
+        "body": body_text,
+        "from": from_header,
         "return_path": return_path_header,
         "reply_to": reply_to_header,
+        "subject": subject_header,
+        "date": date_header,
+        "message_id": message_id_header,
+        "received_chain": received_headers,
+        "evidence_seal": evidence_seal,
+        "extracted_urls": extracted_urls,
+        "attachments": legacy_attachments,
+        # New keys
+        "sha256_hash": sha256_digest,
+        "to": to_header,
         "origin_ip": earliest_origin_ip,
         "relay_hops": hops,
         "hop_count": len(hops),
@@ -332,16 +374,34 @@ def parse_eml_bytes(raw_bytes: bytes) -> Dict[str, Any]:
         },
         "anomalies": anomalies,
         "body_text": body_text,
-        "attachments": attachments
     }
 
 
+# ── Compatibility shims ──────────────────────────────────────────────────────
+# The callers (mailbox_worker, main) expect these exact names and return shapes.
+
 def extract_hops(received_chain: List[str]) -> List[str]:
-    """Extract list of IP strings from received header chain."""
-    hops, _ = extract_relay_hops(received_chain or [])
-    return [h["ip"] for h in hops if h.get("ip")]
+    """
+    Shim: extract public IP strings from Received headers.
+    Returns a flat list of public IP strings (what callers iterate over for geoip).
+    """
+    hops, _ = extract_relay_hops(received_chain)
+    return [h["ip"] for h in hops if h.get("ip") and is_public_ip(h["ip"])]
 
 
-def check_authentication_records(sender_domain: str, raw_content: bytes) -> Dict[str, Any]:
-    """Wrapper around check_spf_dkim_dmarc for main.py API schema alignment."""
-    return check_spf_dkim_dmarc(sender_domain, raw_content)
+def check_authentication_records(sender_domain: str, raw_bytes: bytes) -> Dict[str, Any]:
+    """
+    Shim: run DKIM + parse Authentication-Results and return the AuthResults-compatible dict.
+    """
+    import email as _email
+    from email import policy as _policy
+    msg = _email.message_from_bytes(raw_bytes, policy=_policy.default)
+    auth_headers = msg.get_all("Authentication-Results") or []
+    auth = parse_authentication_results(auth_headers)
+    dkim = verify_dkim_signature(raw_bytes)
+    if dkim["status"] == "pass":
+        auth["dkim_status"] = "pass"
+    # Add optional fields expected by AuthResults schema
+    auth.setdefault("spf_record", None)
+    auth.setdefault("dmarc_record", None)
+    return auth

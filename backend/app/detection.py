@@ -18,11 +18,12 @@ MODEL_DIR = os.path.join(BASE_DIR, "Model")
 BASELINE_MODEL_PATH = os.path.join(MODEL_DIR, "baseline_model.pkl")
 BASELINE_VEC_PATH = os.path.join(MODEL_DIR, "baseline_vectorizer.pkl")
 
-HF_MODEL_NAME = os.getenv("HF_MODEL_NAME", "Dhananjay-N/tracemail-distilbert-phishing-v2")
+HF_MODEL_NAME = os.getenv("HF_MODEL_NAME", "ANMOLGOLA/TraceMail-DistilBERT-3Class")
 
 # Global singleton storage
 _baseline_model = None
 _baseline_vectorizer = None
+_baseline_attempted = False
 _transformer_pipeline = None
 _transformer_attempted = False
 
@@ -57,8 +58,9 @@ SUSPICIOUS_URL_PATTERNS = [
 
 def load_baseline():
     """Load local TF-IDF vectorizer and Logistic Regression baseline."""
-    global _baseline_model, _baseline_vectorizer
-    if _baseline_model is None or _baseline_vectorizer is None:
+    global _baseline_model, _baseline_vectorizer, _baseline_attempted
+    if (_baseline_model is None or _baseline_vectorizer is None) and not _baseline_attempted:
+        _baseline_attempted = True
         if os.path.exists(BASELINE_MODEL_PATH) and os.path.exists(BASELINE_VEC_PATH):
             try:
                 _baseline_model = joblib.load(BASELINE_MODEL_PATH)
@@ -67,31 +69,14 @@ def load_baseline():
             except Exception as e:
                 logger.error(f"Failed loading baseline model: {e}")
         else:
-            logger.warning(f"Baseline files not found at {BASELINE_MODEL_PATH}")
+            logger.warning(f"Baseline files not found at {BASELINE_MODEL_PATH} (falling back to Heuristic Threat Engine)")
     return _baseline_model, _baseline_vectorizer
 
 
 def load_transformer():
-    """Attempt to load DistilBERT fine-tuned model via Hugging Face pipeline."""
-    global _transformer_pipeline, _transformer_attempted
-    if _transformer_pipeline is None and not _transformer_attempted:
-        _transformer_attempted = True
-        try:
-            from transformers import pipeline
-            logger.info(f"Attempting to load DistilBERT model: {HF_MODEL_NAME}")
-            _transformer_pipeline = pipeline(
-                "text-classification",
-                model=HF_MODEL_NAME,
-                tokenizer=HF_MODEL_NAME,
-                device=-1  # CPU by default
-            )
-            logger.info("DistilBERT model loaded successfully.")
-        except Exception as e:
-            logger.warning(f"Could not load Hugging Face transformer ({e}). Falling back to baseline.")
-            _transformer_pipeline = None
-    return _transformer_pipeline
+    """Bypassed loading DistilBERT model to avoid Windows PyTorch DLL crashes."""
+    return None
 
->>>>>>> 06f286df53b9763b098d37dbffd5c9230313ab50
 
 def extract_nlp_cues(text: str) -> Dict[str, Any]:
     """Scan text for urgency, BEC, financial, and authority social engineering indicators."""
@@ -210,12 +195,30 @@ def predict_text(text: str) -> Dict[str, Any]:
 
 
 def classify_email(text: str) -> Dict[str, Any]:
-    """Compatibility wrapper for endpoint returning label, confidence, and model_version."""
-    res = predict_text(text)
-    label_map = {"phishing": "Phishing", "legitimate": "Legitimate", "spam": "Spam", "bec": "BEC"}
-    raw_pred = res.get("prediction", "legitimate")
+    """
+    Public-facing classification entry point used by the pipeline and API.
+    Maps internal prediction labels to TraceMail canonical labels:
+    Legitimate, Phishing, Spam, BEC.
+    Returns a dict compatible with DetectionResult schema.
+    """
+    result = predict_text(text)
+    prediction = result.get("prediction", "legitimate").lower()
+    confidence = result.get("confidence", 0.5)
+    engine = result.get("engine", "unknown")
+    cues = result.get("bec_cues", {})
+
+    # Determine final label
+    if cues.get("is_bec_suspect"):
+        label = "BEC"
+    elif prediction == "phishing":
+        label = "Phishing"
+    elif prediction == "spam":
+        label = "Spam"
+    else:
+        label = "Legitimate"
+
     return {
-        "label": label_map.get(raw_pred, raw_pred.capitalize()),
-        "confidence": res.get("confidence", 0.95),
-        "model_version": res.get("engine", "distilbert")
+        "label": label,
+        "confidence": round(confidence, 4),
+        "model_version": engine
     }

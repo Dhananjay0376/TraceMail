@@ -135,10 +135,48 @@ async def process_single_email(service, msg_id: str, email_account: str) -> Opti
         except Exception as e:
             logger.warning(f"Could not remove UNREAD label from message {msg_id}: {e}")
 
-        # If Stage 1 Passed cleanly, no further deep model inference is needed
+        # If Stage 1 Passed cleanly, save a lightweight clean record and return
         if not stage1_failed:
+            case_id = f"AUTO-{uuid.uuid4().hex[:8].upper()}"
+            timestamp = datetime.now(timezone.utc).isoformat()
+            evidence_seal = EvidenceSeal(**parsed["evidence_seal"])
+
+            clean_response = AnalyzeResponse(
+                id=case_id,
+                timestamp=timestamp,
+                evidence_seal=evidence_seal,
+                detection=DetectionResult(
+                    label="Legitimate",
+                    confidence=0.99,
+                    model_version="stage1-header-check"
+                ),
+                headers=HeaderDetails(
+                    from_header=parsed.get("from"),
+                    return_path=parsed.get("return_path"),
+                    reply_to=parsed.get("reply_to"),
+                    message_id=parsed.get("message_id"),
+                    subject=parsed.get("subject"),
+                    date=parsed.get("date"),
+                    auth_results=auth_results,
+                    received_chain=parsed.get("received_chain", [])
+                ),
+                trace=[],
+                domain_intel=None,
+                extracted_urls=[URLThreatDetails(**u) for u in extracted_urls],
+                attachments=[AttachmentDetails(**a) for a in attachments],
+                fraud_score=FraudScoreBreakdown(
+                    score=0,
+                    risk_level="Low",
+                    factors=[]
+                ),
+                campaign=None,
+                raw_body_preview=(parsed.get("body") or "")[:400]
+            )
+            save_case(clean_response.model_dump())
+            logger.info(f"[STAGE 1 CLEAN] Saved clean email case {case_id} from {from_header}")
             return {
                 "message_id": msg_id,
+                "case_id": case_id,
                 "status": "stage_1_passed",
                 "verdict": "Verified Clean Header",
                 "from": from_header,
@@ -257,14 +295,42 @@ async def poll_all_monitored_mailboxes():
     async with _sync_lock:
         for email, creds in list(ACTIVE_MAILBOXES.items()):
             try:
-                service = build("gmail", "v1", credentials=creds)
-                results = service.users().messages().list(userId='me', q='is:unread', maxResults=5).execute()
+                # Refresh expired token before making any API call
+                if creds.expired or not creds.valid:
+                    if creds.refresh_token:
+                        try:
+                            from google.auth.transport.requests import Request
+                            creds.refresh(Request())
+                            ACTIVE_MAILBOXES[email] = creds
+                            # Persist the refreshed token back to DB
+                            import json as _json
+                            refreshed_token = _json.dumps({
+                                "token": creds.token,
+                                "refresh_token": creds.refresh_token,
+                                "token_uri": creds.token_uri,
+                                "client_id": creds.client_id,
+                                "client_secret": creds.client_secret,
+                                "scopes": list(creds.scopes) if creds.scopes else []
+                            })
+                            save_monitored_mailbox(email, refreshed_token)
+                            logger.info(f"Token refreshed and persisted for mailbox: {email}")
+                        except Exception as refresh_err:
+                            logger.error(f"Token refresh failed for {email}: {refresh_err}. Skipping.")
+                            continue
+                    else:
+                        logger.warning(f"No refresh_token available for {email}. Skipping — re-auth required.")
+                        continue
+
+                service = build("gmail", "v1", credentials=creds, cache_discovery=False)
+                results = service.users().messages().list(userId='me', q='is:unread', maxResults=10).execute()
                 messages = results.get('messages', [])
 
                 if messages:
                     logger.info(f"Discovered {len(messages)} unread email(s) in mailbox: {email}")
                     for m in messages:
                         await process_single_email(service, m['id'], email)
+                else:
+                    logger.debug(f"No unread emails in mailbox: {email}")
 
                 update_mailbox_last_synced(email)
             except Exception as e:

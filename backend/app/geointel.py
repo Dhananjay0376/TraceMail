@@ -131,15 +131,45 @@ DEMO_DOMAIN_FALLBACKS = {
         "has_mx": True,
         "mx_matches_sender": True
     },
-    "it-desk-portal.net": {
-        "domain": "it-desk-portal.net",
-        "registrar": "Regional Registrar Services",
-        "creation_date": "2026-09-07T14:15:00Z",
-        "domain_age_days": 2,
-        "is_new_domain": True,
-        "mx_records": ["mx10.bulletproof-host.ru"],
+    "gmail.com": {
+        "domain": "gmail.com",
+        "registrar": "MarkMonitor, Inc.",
+        "creation_date": "1995-08-13T00:00:00Z",
+        "domain_age_days": 11350,
+        "is_new_domain": False,
+        "mx_records": ["gmail-smtp-in.l.google.com"],
         "has_mx": True,
-        "mx_matches_sender": False
+        "mx_matches_sender": True
+    },
+    "google.com": {
+        "domain": "google.com",
+        "registrar": "MarkMonitor, Inc.",
+        "creation_date": "1997-09-15T00:00:00Z",
+        "domain_age_days": 10590,
+        "is_new_domain": False,
+        "mx_records": ["smtp.google.com"],
+        "has_mx": True,
+        "mx_matches_sender": True
+    },
+    "outlook.com": {
+        "domain": "outlook.com",
+        "registrar": "MarkMonitor, Inc.",
+        "creation_date": "1996-05-04T00:00:00Z",
+        "domain_age_days": 11080,
+        "is_new_domain": False,
+        "mx_records": ["outlook-com.olc.protection.outlook.com"],
+        "has_mx": True,
+        "mx_matches_sender": True
+    },
+    "yahoo.com": {
+        "domain": "yahoo.com",
+        "registrar": "MarkMonitor, Inc.",
+        "creation_date": "1995-01-18T00:00:00Z",
+        "domain_age_days": 11550,
+        "is_new_domain": False,
+        "mx_records": ["mta5.am0.yahoodns.net"],
+        "has_mx": True,
+        "mx_matches_sender": True
     }
 }
 
@@ -298,19 +328,25 @@ def domain_intel(domain: Optional[str]) -> Dict[str, Any]:
     except Exception:
         mx_list = []
 
-    # 2. WHOIS Lookup via python-whois
+    # 2. WHOIS Lookup via python-whois with 2s safety timeout
     try:
+        import socket
         import whois
-        w = whois.whois(clean_domain)
-        registrar = str(w.registrar or "Unknown Registrar")
-        c_date = w.creation_date
-        if isinstance(c_date, list):
-            c_date = c_date[0]
-        if isinstance(c_date, datetime):
-            creation_date = c_date.isoformat()
-            now = datetime.now(timezone.utc) if c_date.tzinfo else datetime.now()
-            age_days = max(0, (now - c_date).days)
-            is_new = age_days < 30
+        orig_timeout = socket.getdefaulttimeout()
+        socket.setdefaulttimeout(2.0)
+        try:
+            w = whois.whois(clean_domain)
+            registrar = str(w.registrar or "Unknown Registrar")
+            c_date = w.creation_date
+            if isinstance(c_date, list):
+                c_date = c_date[0]
+            if isinstance(c_date, datetime):
+                creation_date = c_date.isoformat()
+                now = datetime.now(timezone.utc) if c_date.tzinfo else datetime.now()
+                age_days = max(0, (now - c_date).days)
+                is_new = age_days < 30
+        finally:
+            socket.setdefaulttimeout(orig_timeout)
     except Exception as e:
         logger.warning(f"WHOIS lookup failed for {clean_domain}: {e}")
 

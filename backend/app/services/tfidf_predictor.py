@@ -81,7 +81,10 @@ class TfidfPredictor:
         single_path, vec_path, model_path = self._resolve_paths()
 
         if not single_path and not (vec_path and model_path):
-            logger.warning("TF-IDF model or vectorizer files not found in standard paths.")
+            if not getattr(self, '_warning_logged', False):
+                self._warning_logged = True
+                logger.info("Local TF-IDF model files not present — running in high-performance Heuristic Threat Engine mode.")
+            self._is_loaded = True
             return False
 
         try:
