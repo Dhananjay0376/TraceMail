@@ -4,9 +4,14 @@ import logging
 from typing import Dict, Any, List, Optional
 from fastapi import APIRouter, Request, HTTPException, Query
 from fastapi.responses import RedirectResponse, HTMLResponse
-from google_auth_oauthlib.flow import Flow
-from googleapiclient.discovery import build
-from google.oauth2.credentials import Credentials
+try:
+    from google_auth_oauthlib.flow import Flow
+    from googleapiclient.discovery import build
+    from google.oauth2.credentials import Credentials
+except ImportError:
+    Flow = None
+    build = None
+    Credentials = None
 try:
     from dotenv import load_dotenv
     load_dotenv()
@@ -60,17 +65,30 @@ def google_login():
     config = get_google_client_config()
     redirect_uri = get_redirect_uri()
     
-    flow = Flow.from_client_config(
-        config,
-        scopes=SCOPES,
-        redirect_uri=redirect_uri,
-        autogenerate_code_verifier=False
-    )
-    auth_url, _ = flow.authorization_url(
-        access_type="offline",
-        include_granted_scopes="true",
-        prompt="consent"
-    )
+    if Flow is not None:
+        flow = Flow.from_client_config(
+            config,
+            scopes=SCOPES,
+            redirect_uri=redirect_uri,
+            autogenerate_code_verifier=False
+        )
+        auth_url, _ = flow.authorization_url(
+            access_type="offline",
+            include_granted_scopes="true",
+            prompt="consent"
+        )
+    else:
+        import urllib.parse
+        client_id = config.get("web", {}).get("client_id", "")
+        params = {
+            "client_id": client_id,
+            "redirect_uri": redirect_uri,
+            "response_type": "code",
+            "scope": " ".join(SCOPES),
+            "access_type": "offline",
+            "prompt": "consent"
+        }
+        auth_url = f"https://accounts.google.com/o/oauth2/auth?{urllib.parse.urlencode(params)}"
     return RedirectResponse(auth_url)
 
 @router.get("/google/callback", response_class=HTMLResponse)

@@ -1,0 +1,23 @@
+From: "IT Service Desk Helpdesk" <support@it-desk-portal.net>
+To: "Operations Dept" <ops@target-finance.in>
+Subject: CRITICAL: Password Expiry Notification - Immediate Reset Required
+Date: Wed, 09 Sep 2026 16:10:00 +0000
+Message-ID: <pass-reset-202609091610@vps-bulletproof-host.ru>
+Return-Path: <no-reply@it-desk-portal.net>
+Reply-To: <collector@darknet-harvest.biz>
+MIME-Version: 1.0
+Content-Type: text/plain; charset="utf-8"
+Received: from mx.target-finance.in ([198.51.100.99]) by mail.target-finance.in with ESMTP id 77123; Wed, 09 Sep 2026 16:11:00 +0000
+Received: from vps102.bulletproof-host.ru ([185.220.101.5]) by mx.target-finance.in with ESMTP id 55432; Wed, 09 Sep 2026 16:10:20 +0000
+Authentication-Results: mx.target-finance.in; spf=fail (sender IP 185.220.101.5 not authorized); dkim=none; dmarc=fail
+
+Enterprise Security Notice:
+
+Your corporate network credentials and active directory token are scheduled to expire in 2 hours.
+Failure to update credentials will cause an automatic lockout of your corporate email and financial dashboard.
+
+Click the direct authorization link below to verify your existing password and choose a new password:
+http://it-desk-portal.net/auth-login.php
+
+Help Desk Administration
+Operations Support Center

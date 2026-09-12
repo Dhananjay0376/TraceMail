@@ -11,10 +11,12 @@ import {
   Sparkles,
   Inbox,
   ExternalLink,
+  Menu,
 } from 'lucide-react';
 import StatCard from '../common/StatCard';
 import RiskBadge from '../common/RiskBadge';
 import MiniWorldMap from '../map/MiniWorldMap';
+import MagicBento from '../vfx/MagicBento';
 import { MOCK_STATS, MOCK_ALERTS } from '../../mock/mockData';
 
 export default function DashboardScreen({
@@ -27,6 +29,7 @@ export default function DashboardScreen({
   onSelectSample,
   onNavigate,
   onLoadDemoData,
+  onToggleSidebar,
 }) {
   const isEmployee = currentRole === 'employee';
   const isDemo = currentUser?.isDemo ?? false;
@@ -95,6 +98,15 @@ export default function DashboardScreen({
             </p>
 
             <div className="mt-8 flex flex-wrap items-center gap-4">
+              {onToggleSidebar && (
+                <button
+                  onClick={onToggleSidebar}
+                  className="px-6 py-3.5 rounded-full bg-[#001D39] hover:bg-[#0A4174] border border-[#7BBDE8]/40 text-white font-mono font-bold text-xs uppercase tracking-wider transition-all cursor-pointer flex items-center gap-2 paper-pill shadow-xl"
+                >
+                  <Menu className="w-4 h-4 text-[#7BBDE8]" />
+                  <span>Main Menu</span>
+                </button>
+              )}
               <button
                 onClick={onOpenSubmit}
                 className="px-7 py-3.5 rounded-full bg-[#BDD8E9] hover:bg-white text-[#001D39] font-mono font-extrabold text-xs uppercase tracking-wider transition-all cursor-pointer flex items-center gap-2 paper-pill shadow-xl spring-hover"
@@ -231,6 +243,17 @@ export default function DashboardScreen({
           </div>
 
           <div className="flex flex-wrap items-center gap-3 shrink-0">
+            {onToggleSidebar && (
+              <button
+                onClick={onToggleSidebar}
+                className="px-5 py-2.5 rounded-full border border-[#7BBDE8]/40 bg-[#001D39] hover:bg-[#0A4174] text-white text-xs font-mono font-bold transition-all cursor-pointer flex items-center gap-2 paper-pill shadow-md spring-hover"
+                title="Open Main Menu Sidebar"
+              >
+                <Menu className="w-4 h-4 text-[#7BBDE8]" />
+                <span>Main Menu</span>
+              </button>
+            )}
+
             {showEmptyState ? (
               <button
                 onClick={() => setShowEmptyState(false)}
@@ -297,7 +320,7 @@ export default function DashboardScreen({
         </div>
       ) : (
         <>
-          {/* 4 Core Summary Stat Cards in Paper-Cut Palette */}
+          {/* 4 Core Summary Stat Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 font-mono">
             <StatCard
               title="Total Scanned"

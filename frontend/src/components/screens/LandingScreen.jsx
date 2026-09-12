@@ -32,8 +32,9 @@ const heroSlides = [
     sub: 'Before It Reaches Your Workforce.',
     description:
       'Expose phishing, spoofing, and lookalike domains instantly. Reconstruct RFC 822 relay paths, audit DMARC cryptographic signatures, and generate court-ready forensic reports in seconds.',
-    bg: 'from-[#050814] via-[#0a0f28] to-[#050814]',
+    bg: 'from-[#061B2E] via-[#0A3E66] to-[#061B2E]',
     accent: '#2b52ff',
+    subGradient: 'from-blue-400 via-sky-300 to-cyan-300',
     product: 'Email Forensics',
   },
   {
@@ -42,8 +43,9 @@ const heroSlides = [
     sub: 'Expose Every Attacker.',
     description:
       'Reconstruct the full RFC 822 MTA relay path exposing proxy concealment, TOR exit nodes, and bulletproof ASNs with multi-hop IP geolocation intelligence.',
-    bg: 'from-[#06050e] via-[#130828] to-[#06050e]',
-    accent: '#7c24ff',
+    bg: 'from-[#061B2E] via-[#083B4B] to-[#061B2E]',
+    accent: '#00e3d8',
+    subGradient: 'from-cyan-400 via-teal-300 to-emerald-300',
     product: 'Geo Intelligence',
   },
   {
@@ -52,8 +54,9 @@ const heroSlides = [
     sub: 'Unmask Coordinated Campaigns.',
     description:
       'Correlate isolated email threats into unified coordinated campaigns using graph network clustering and shared IOC fingerprints for total attribution.',
-    bg: 'from-[#050c14] via-[#081826] to-[#050c14]',
-    accent: '#00e3d8',
+    bg: 'from-[#061B2E] via-[#0A3E66] to-[#061B2E]',
+    accent: '#7c24ff',
+    subGradient: 'from-purple-400 via-fuchsia-300 to-indigo-300',
     product: 'Campaign Attribution',
   },
 ];
@@ -184,6 +187,26 @@ function FAQItem({ q, a, isOpen, onToggle }) {
   );
 }
 
+// ─── Formatted Description Renderer ──────────────────────────────────────────
+function FormattedDescription({ text }) {
+  const formatted = text
+    .replace(/(RFC 822)/g, '<code class="font-mono text-xs sm:text-sm px-1.5 py-0.5 rounded bg-cyan-950/80 border border-cyan-500/40 text-cyan-300 font-semibold">RFC 822</code>')
+    .replace(/(MTA relay path|relay paths)/g, '<span class="text-white font-medium">$1</span>')
+    .replace(/(TOR exit nodes)/g, '<code class="font-mono text-xs sm:text-sm px-1.5 py-0.5 rounded bg-amber-950/80 border border-amber-500/40 text-amber-300 font-semibold">TOR exit nodes</code>')
+    .replace(/(bulletproof ASNs)/g, '<code class="font-mono text-xs sm:text-sm px-1.5 py-0.5 rounded bg-red-950/80 border border-red-500/40 text-red-300 font-semibold">bulletproof ASNs</code>')
+    .replace(/(DMARC cryptographic signatures|DMARC)/g, '<code class="font-mono text-xs sm:text-sm px-1.5 py-0.5 rounded bg-blue-950/80 border border-blue-500/40 text-blue-300 font-semibold">$1</code>')
+    .replace(/(IP geolocation intelligence)/g, '<span class="text-white font-medium">$1</span>')
+    .replace(/(graph network clustering)/g, '<span class="text-white font-medium">$1</span>')
+    .replace(/(IOC fingerprints)/g, '<code class="font-mono text-xs sm:text-sm px-1.5 py-0.5 rounded bg-purple-950/80 border border-purple-500/40 text-purple-300 font-semibold">IOC fingerprints</code>');
+
+  return (
+    <p
+      className="mt-6 text-base sm:text-lg text-slate-300 max-w-2xl leading-relaxed font-sans"
+      dangerouslySetInnerHTML={{ __html: formatted }}
+    />
+  );
+}
+
 // ─── Main Component ───────────────────────────────────────────────────────────
 export default function LandingScreen({
   onStartAnalysis,
@@ -240,7 +263,7 @@ export default function LandingScreen({
   const slide = heroSlides[currentSlide];
 
   return (
-    <div className="min-h-screen bg-white text-gray-900 font-sans">
+    <div className="min-h-screen bg-[#061B2E] text-gray-900 font-sans">
 
       {/* ════════════════════════════════════════════════════════════
           SECTION 1 · HERO CAROUSEL — Dark Cinematic
@@ -262,61 +285,27 @@ export default function LandingScreen({
           }}
         />
 
-        <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-8 pt-8 pb-12 flex flex-col min-h-screen">
-          {/* Top Navigation Bar: Public Marketing Header */}
-          <div className="flex items-center justify-between pb-8 border-b border-white/10">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-xl bg-redrob-blue/20 border border-redrob-blue/40 flex items-center justify-center">
-                <ShieldAlert className="w-4.5 h-4.5 text-redrob-aqua" />
-              </div>
-              <div>
-                <span className="text-lg font-black text-white tracking-tight">TraceMail</span>
-                <span className="text-[10px] text-slate-400 font-mono ml-2">Forensics &amp; Threat Intel</span>
-              </div>
-            </div>
+        <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-8 pt-4 pb-12 flex flex-col min-h-screen">
 
-            {/* Top-Right Authentication & Demo Buttons */}
-            <div className="flex items-center gap-3">
-              <button
-                onClick={onRequestDemo || (() => onOpenAuth && onOpenAuth('demo'))}
-                className="hidden sm:inline-flex px-4 py-2 rounded-full border border-white/20 hover:border-white/40 text-slate-200 hover:text-white font-mono text-xs transition-all cursor-pointer"
-              >
-                Request Demo
-              </button>
-              <button
-                onClick={onOpenLogin || (() => onOpenAuth && onOpenAuth('login'))}
-                className="px-4 py-2 rounded-full bg-white/5 hover:bg-white/15 border border-white/10 text-white font-mono text-xs font-bold transition-all cursor-pointer"
-              >
-                Login
-              </button>
-              <button
-                onClick={onOpenSignUp || (() => onOpenAuth && onOpenAuth('signup'))}
-                className="px-5 py-2 rounded-full bg-redrob-blue hover:bg-redrob-blueHover text-white font-mono text-xs font-bold uppercase tracking-wider transition-all shadow-redrob-glow cursor-pointer"
-              >
-                Sign Up
-              </button>
-            </div>
-          </div>
-
-          {/* Slide label */}
-          <div className="mt-8 mb-6">
-            <span className="text-xs font-mono text-white/50 uppercase tracking-[0.2em]">
-              {slide.label}
-            </span>
-          </div>
-
-          {/* Main headline — massive editorial typography */}
+          {/* Main headline — authentic, high-impact cybersecurity typography */}
           <div className="flex-1 flex flex-col justify-center">
-            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold text-white leading-[1.1] tracking-tight mb-4">
-              {slide.headline}
-              <span className="block font-serif italic font-light text-white/70 mt-2 text-2xl sm:text-4xl lg:text-5xl">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/5 border border-white/10 backdrop-blur-md mb-6 w-fit shadow-inner">
+              <span className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: slide.accent }} />
+              <span className="font-mono text-xs uppercase tracking-widest font-bold text-slate-200">
+                {slide.label}
+              </span>
+            </div>
+
+            <h1 className="mb-2">
+              <span className="block font-league uppercase tracking-wider text-5xl sm:text-7xl lg:text-8xl text-white font-normal leading-none drop-shadow-md">
+                {slide.headline}
+              </span>
+              <span className={`block font-besley font-medium text-2xl sm:text-4xl lg:text-5xl mt-3 leading-tight bg-gradient-to-r ${slide.subGradient || 'from-cyan-400 to-blue-400'} bg-clip-text text-transparent`}>
                 {slide.sub}
               </span>
             </h1>
 
-            <p className="mt-6 text-base sm:text-lg text-white/50 max-w-2xl leading-relaxed font-sans">
-              {slide.description}
-            </p>
+            <FormattedDescription text={slide.description} />
 
             {/* CTA Buttons */}
             <div className="mt-10 flex flex-wrap items-center gap-4">

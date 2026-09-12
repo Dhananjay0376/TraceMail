@@ -113,6 +113,12 @@ export default function App() {
     if (targetHash && window.location.hash !== targetHash) {
       window.history.pushState(null, '', targetHash);
     }
+    if (['dashboard', 'submit', 'cases', 'alerts', 'search', 'report', 'settings'].includes(currentScreen)) {
+      if (typeof window !== 'undefined' && window.innerWidth >= 1024) {
+        setIsSidebarOpen(true);
+        setIsSidebarPinned(true);
+      }
+    }
   }, [currentScreen]);
 
   // Helper to load user profile and data
@@ -198,6 +204,7 @@ export default function App() {
               showToast(`Welcome, ${user.name || 'Analyst'}!`);
             } else if (currentTab === 'landing') {
               setCurrentScreen('dashboard');
+            }
             }
           }
         } catch (err) {
@@ -322,7 +329,7 @@ export default function App() {
       if (currentUser?.id) {
         try {
           localStorage.setItem(`tracemail_cases_${currentUser.id}`, JSON.stringify(updated));
-        } catch (_) {}
+        } catch (_) { }
       }
       return updated;
     });
@@ -331,19 +338,11 @@ export default function App() {
     if (!isSidebarPinned) setIsSidebarOpen(false);
   };
 
-  // Auth success callback
+  // Auth success callback - directly open Organization Setup Wizard ('onboarding')
   const handleAuthSuccess = (user) => {
     loadUserData(user);
-
-    if (user.isFirstTime) {
-      // First-time users go to Onboarding
-      setCurrentScreen('onboarding');
-      showToast('Account created! Welcome to the workspace onboarding wizard.');
-    } else {
-      // Returning users go to Dashboard
-      setCurrentScreen('dashboard');
-      showToast(`Welcome back, ${user.name || 'Analyst'}!`);
-    }
+    setCurrentScreen('onboarding');
+    showToast(`Signed in successfully! Organization Setup Wizard loaded.`);
   };
 
   // Onboarding completion
@@ -368,7 +367,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#050814] text-slate-100 flex flex-col font-sans relative overflow-x-hidden">
+    <div className="min-h-screen bg-[#061B2E] text-slate-100 flex flex-col font-sans relative overflow-x-hidden">
       {/* Redrob Ambient Lighting Aura & Tech Grid */}
       <AmbientAura />
 
@@ -423,9 +422,8 @@ export default function App() {
 
         {/* Main Dynamic View Area: renders the selected whole tab */}
         <main
-          className={`flex-1 min-w-0 transition-all duration-300 ${
-            isSidebarPinned && isSidebarOpen ? 'lg:pl-72' : ''
-          }`}
+          className={`flex-1 min-w-0 transition-all duration-300 ${isSidebarPinned && isSidebarOpen ? 'lg:pl-72' : ''
+            }`}
         >
           {/* 1. Landing Page */}
           {currentScreen === 'landing' && (
@@ -474,6 +472,7 @@ export default function App() {
               onOpenSubmit={() => handleNavigate('submit')}
               onSelectSample={handleDirectInspect}
               onNavigate={handleNavigate}
+              onToggleSidebar={() => setIsSidebarOpen((prev) => !prev)}
             />
           )}
 
@@ -569,7 +568,7 @@ export default function App() {
           } catch (err) {
             console.warn('Logout error:', err);
           }
-          try { localStorage.removeItem('tracemail_active_user'); } catch (_) {}
+          try { localStorage.removeItem('tracemail_active_user'); } catch (_) { }
           setCurrentRole('analyst');
           setCurrentUser(null);
           setCases([]);

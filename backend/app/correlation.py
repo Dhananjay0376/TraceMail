@@ -1,249 +1,319 @@
-import networkx as nx
-from typing import Dict, Any, List, Optional
-import uuid
+"""
+TraceMail Correlation Engine & Explainable Fraud Scoring
+Calculates an explainable 0-100 fraud confidence score with transparent attribution factors.
+Maintains a NetworkX knowledge graph to correlate infrastructure across multiple cases
+and reveal coordinated cybercrime / fraud campaigns.
+"""
 
-# In-memory graph of analyzed entities
-_campaign_graph = nx.DiGraph()
+import uuid
+from datetime import datetime, timezone
+from typing import Dict, Any, List, Optional
+import networkx as nx
+import logging
+
+logger = logging.getLogger("tracemail.correlation")
+
+
+class CampaignGraphManager:
+    """Manages cross-case relationship graph using NetworkX."""
+
+    def __init__(self):
+        self.G = nx.DiGraph()
+        self.cases_store: Dict[str, Dict[str, Any]] = {}
+
+    def add_case(
+        self,
+        case_id: str,
+        subject: str,
+        fraud_score: int,
+        verdict: str,
+        sender_email: str,
+        sender_domain: str,
+        reply_to_email: Optional[str],
+        origin_ip: Optional[str],
+        hops: List[Dict[str, Any]],
+        geo: Dict[str, Any]
+    ) -> None:
+        """Register an analyzed case and wire its infrastructure into the graph."""
+        timestamp = datetime.now(timezone.utc).isoformat()
+        
+        # 1. Add Case Node
+        self.G.add_node(
+            case_id,
+            id=case_id,
+            type="case",
+            label=f"Case #{case_id[:8]}",
+            subject=subject,
+            fraud_score=fraud_score,
+            verdict=verdict,
+            timestamp=timestamp
+        )
+
+        # 2. Add Sender Node
+        if sender_email:
+            sender_id = f"sender:{sender_email.lower()}"
+            self.G.add_node(sender_id, id=sender_id, type="sender", label=sender_email)
+            self.G.add_edge(case_id, sender_id, relation="sent_by")
+
+        # 3. Add Domain Node
+        if sender_domain:
+            domain_id = f"domain:{sender_domain.lower()}"
+            self.G.add_node(domain_id, id=domain_id, type="domain", label=sender_domain)
+            self.G.add_edge(case_id, domain_id, relation="claimed_domain")
+            if sender_email:
+                self.G.add_edge(sender_id, domain_id, relation="domain_of")
+
+        # 4. Add Reply-To Domain if divergent
+        if reply_to_email and "@" in reply_to_email:
+            reply_domain = reply_to_email.split("@")[-1].strip("<>").lower()
+            reply_domain_id = f"domain:{reply_domain}"
+            self.G.add_node(reply_domain_id, id=reply_domain_id, type="domain", label=reply_domain)
+            self.G.add_edge(case_id, reply_domain_id, relation="routes_reply_to")
+
+        # 5. Add Origin IP & Relay Hops
+        if origin_ip:
+            ip_id = f"ip:{origin_ip}"
+            self.G.add_node(
+                ip_id,
+                id=ip_id,
+                type="ip",
+                label=origin_ip,
+                country=geo.get("country", "Unknown"),
+                city=geo.get("city", "Unknown"),
+                org=geo.get("org", "Unknown"),
+                is_hosting=geo.get("is_hosting", False)
+            )
+            self.G.add_edge(case_id, ip_id, relation="originating_ip")
+
+        # Track hops
+        for hop in hops:
+            h_ip = hop.get("ip")
+            if h_ip and h_ip != origin_ip:
+                hip_id = f"ip:{h_ip}"
+                self.G.add_node(hip_id, id=hip_id, type="ip", label=h_ip, is_relay=True)
+                self.G.add_edge(case_id, hip_id, relation="relayed_through")
+
+    def get_campaign_clusters(self) -> List[Dict[str, Any]]:
+        """Identify shared infrastructure across distinct cases to detect coordinated campaigns."""
+        campaigns = []
+        # Find all IP and Domain nodes that have in-degree > 1 from cases
+        shared_entities = {}
+        for node, data in self.G.nodes(data=True):
+            node_type = data.get("type")
+            if node_type in ("ip", "domain"):
+                # Find connected cases
+                connected_cases = [
+                    u for u, v, attrs in self.G.in_edges(node, data=True)
+                    if self.G.nodes[u].get("type") == "case"
+                ]
+                if len(connected_cases) > 1:
+                    shared_entities[node] = {
+                        "entity": node,
+                        "entity_type": node_type,
+                        "label": data.get("label", node),
+                        "details": data,
+                        "linked_cases": connected_cases
+                    }
+
+        if shared_entities:
+            campaign_id = 1
+            for entity_key, info in shared_entities.items():
+                campaigns.append({
+                    "campaign_id": f"CAMP-{campaign_id:03d}",
+                    "name": f"Infrastructure Cluster ({info['label']})",
+                    "threat_entity": info["label"],
+                    "entity_type": info["entity_type"],
+                    "case_count": len(info["linked_cases"]),
+                    "linked_cases": info["linked_cases"],
+                    "severity": "CRITICAL" if info["entity_type"] == "ip" else "HIGH",
+                    "description": f"Shared {info['entity_type']} observed across {len(info['linked_cases'])} independent email attacks."
+                })
+                campaign_id += 1
+
+        return campaigns
+
+    def export_graph_json(self) -> Dict[str, Any]:
+        """Format the NetworkX graph for React frontend node-link visualization."""
+        nodes = []
+        for n, d in self.G.nodes(data=True):
+            nodes.append({
+                "id": str(n),
+                "label": d.get("label", str(n)),
+                "type": d.get("type", "unknown"),
+                "score": d.get("fraud_score", None),
+                "verdict": d.get("verdict", None),
+                "country": d.get("country", None),
+                "org": d.get("org", None),
+                "is_hosting": d.get("is_hosting", False)
+            })
+
+        links = []
+        for u, v, d in self.G.edges(data=True):
+            links.append({
+                "source": str(u),
+                "target": str(v),
+                "relation": d.get("relation", "linked_to")
+            })
+
+        return {
+            "nodes": nodes,
+            "links": links,
+            "campaigns": self.get_campaign_clusters(),
+            "total_cases": sum(1 for _, d in self.G.nodes(data=True) if d.get("type") == "case"),
+            "total_nodes": len(nodes),
+            "total_links": len(links)
+        }
+
+
+# Global singleton instance
+graph_manager = CampaignGraphManager()
+
 
 def compute_fraud_score(
     model_prob: float,
-    is_phishing_label: bool,
     spf_status: str,
     dkim_status: str,
     dmarc_status: str,
-    domain_age_days: Optional[int],
+    domain_age_days: int,
     is_hosting_ip: bool,
-    sender_return_path_mismatch: bool = False,
-    extracted_urls: Optional[List[Dict[str, Any]]] = None,
-    attachments: Optional[List[Dict[str, Any]]] = None
+    reply_to_mismatch: bool,
+    display_name_spoofing: bool,
+    bec_cues: Dict[str, Any],
+    return_path_mismatch: bool = False,
+    reply_domain_age_days: Optional[int] = None
 ) -> Dict[str, Any]:
     """
-    Transparent, explainable fraud-confidence score (0 - 100)
-    combining ML detection, protocol validation, domain intel, URL analysis, and attachment threats.
+    Compute transparent, explainable 0-100 fraud confidence score with point-by-point attribution.
     """
-    score = 0.0
-    factors = []
-
-    # 1. NLP / ML Detection Model (Up to 40 pts)
-    if is_phishing_label:
-        ml_points = round(model_prob * 40.0, 1)
-        score += ml_points
-        factors.append({
-            "name": "NLP Model Threat Detection",
-            "points": ml_points,
-            "reason": f"Text classification flagged high threat patterns ({round(model_prob*100, 1)}% confidence)"
-        })
-    else:
-        ml_points = round((1.0 - model_prob) * 5.0, 1)
-        score += ml_points
-
-    # 2. Email Authentication (SPF, DKIM, DMARC) (Up to 25 pts)
-    if spf_status.lower() == 'fail':
-        score += 10.0
-        factors.append({
-            "name": "SPF Authentication Failure",
-            "points": 10.0,
-            "reason": "Originating IP is not authorized by the domain's SPF DNS record"
-        })
+    breakdown = []
     
-    if dkim_status.lower() == 'fail':
-        score += 10.0
-        factors.append({
-            "name": "DKIM Cryptographic Failure",
-            "points": 10.0,
-            "reason": "DKIM signature does not match or was altered in transit"
-        })
+    # 1. NLP / Machine Learning Base (0 - 40 pts)
+    ml_pts = int(round(model_prob * 40))
+    breakdown.append({
+        "category": "AI / NLP Threat Classifier",
+        "points": ml_pts,
+        "max_points": 40,
+        "flagged": ml_pts > 15,
+        "detail": f"Model evaluated email text as {round(model_prob * 100, 1)}% phishing risk"
+    })
 
-    if dmarc_status.lower() == 'fail':
-        score += 10.0
-        factors.append({
-            "name": "DMARC Alignment Failure",
-            "points": 10.0,
-            "reason": "Domain policy alignment failed on receiving gateway"
-        })
+    # 2. SPF Protocol Verification (10 pts)
+    spf_fail = spf_status.lower() in ("fail", "softfail")
+    spf_pts = 10 if spf_fail else 0
+    breakdown.append({
+        "category": "SPF Authentication",
+        "points": spf_pts,
+        "max_points": 10,
+        "flagged": spf_fail,
+        "detail": f"SPF status is '{spf_status.upper()}' (sending IP not authorized)" if spf_fail else "SPF passed or neutral"
+    })
 
-    # 3. Domain Age (< 30 days old = suspicious) (15 pts)
-    if domain_age_days is not None and domain_age_days < 30:
-        score += 15.0
-        factors.append({
-            "name": "Newly Registered Domain",
-            "points": 15.0,
-            "reason": f"Sender domain was registered only {domain_age_days} days ago (lookalike/burner domain indicator)"
-        })
+    # 3. DKIM Cryptographic Signature (10 pts)
+    dkim_fail = dkim_status.lower() in ("fail", "none")
+    dkim_pts = 10 if dkim_fail else 0
+    breakdown.append({
+        "category": "DKIM Cryptographic Seal",
+        "points": dkim_pts,
+        "max_points": 10,
+        "flagged": dkim_fail,
+        "detail": "DKIM signature invalid or missing" if dkim_fail else "DKIM signature verified"
+    })
 
-    # 4. Originating IP in Hosting / Data Center (10 pts)
-    if is_hosting_ip:
-        score += 10.0
-        factors.append({
-            "name": "Origin from Cloud / VPS Relay",
-            "points": 10.0,
-            "reason": "Earliest sending node originates from a VPS/cloud hosting network instead of corporate mail server"
-        })
+    # 4. DMARC Alignment & Policy (10 pts)
+    dmarc_fail = dmarc_status.lower() == "fail"
+    dmarc_pts = 10 if dmarc_fail else 0
+    breakdown.append({
+        "category": "DMARC Alignment Policy",
+        "points": dmarc_pts,
+        "max_points": 10,
+        "flagged": dmarc_fail,
+        "detail": "DMARC check failed" if dmarc_fail else "DMARC aligned or unconfigured"
+    })
 
-    # 5. Mismatched Sender & Return-Path (10 pts)
-    if sender_return_path_mismatch:
-        score += 10.0
-        factors.append({
-            "name": "From & Return-Path Header Mismatch",
-            "points": 10.0,
-            "reason": "Display sender domain does not match technical Return-Path bounce domain"
-        })
+    # 5. Newly Registered Domain (< 30 days) (15 pts)
+    effective_age = domain_age_days
+    if reply_domain_age_days is not None and reply_to_mismatch:
+        effective_age = min(domain_age_days, reply_domain_age_days)
+    new_domain = effective_age < 30
+    domain_pts = 15 if new_domain else 0
+    breakdown.append({
+        "category": "Domain Age / WHOIS",
+        "points": domain_pts,
+        "max_points": 15,
+        "flagged": new_domain,
+        "detail": f"Domain registered only {effective_age} days ago (lookalike domain pattern)" if new_domain else f"Established domain ({effective_age} days old)"
+    })
 
-    # 6. Deep URL Threat Indicators (Up to 20 pts)
-    if extracted_urls:
-        high_risk_urls = [u for u in extracted_urls if u.get('risk_score', 0) >= 30.0]
-        if high_risk_urls:
-            url_pts = 15.0 if any(u.get('is_mismatched_anchor') or u.get('is_ip_based') for u in high_risk_urls) else 10.0
-            score += url_pts
-            top_flags = high_risk_urls[0].get('threat_flags', ['Suspicious URL structure'])
-            factors.append({
-                "name": "Deceptive Embedded Hyperlinks",
-                "points": url_pts,
-                "reason": f"Detected {len(high_risk_urls)} deceptive URL(s): {', '.join(top_flags[:2])}"
-            })
+    # 6. Generic Cloud VPS / Datacenter Origin (10 pts)
+    hosting_pts = 10 if is_hosting_ip else 0
+    breakdown.append({
+        "category": "Infrastructure Hosting Flag",
+        "points": hosting_pts,
+        "max_points": 10,
+        "flagged": is_hosting_ip,
+        "detail": "Mail originated directly from a generic cloud VPS / bulletproof datacenter ASN" if is_hosting_ip else "Residential or corporate enterprise route"
+    })
 
-    # 7. Malicious / Dangerous Attachment Extension (Up to 25 pts)
-    if attachments:
-        dangerous_att = [a for a in attachments if a.get('is_suspicious_extension')]
-        if dangerous_att:
-            att_pts = 20.0
-            score += att_pts
-            names = [a.get('filename') for a in dangerous_att]
-            factors.append({
-                "name": "High-Risk Executable / Script Attachment",
-                "points": att_pts,
-                "reason": f"Email contains hazardous file attachment(s): {', '.join(names[:2])}"
-            })
+    # 7. Identity & Header Divergence Spoofing (15 pts)
+    spoof_flags = []
+    spoof_pts = 0
+    if reply_to_mismatch:
+        spoof_pts += 8
+        spoof_flags.append("Reply-To domain mismatch")
+    if return_path_mismatch:
+        spoof_pts += 4
+        spoof_flags.append("Return-Path bounce divergence")
+    if display_name_spoofing:
+        spoof_pts += 5
+        spoof_flags.append("VIP / brand display name impersonation")
+        
+    actual_spoof_pts = min(spoof_pts, 15)
+    breakdown.append({
+        "category": "Sender Identity Alignment",
+        "points": actual_spoof_pts,
+        "max_points": 15,
+        "flagged": len(spoof_flags) > 0,
+        "detail": ", ".join(spoof_flags) if spoof_flags else "Sender identities aligned"
+    })
 
-    final_score = int(min(round(score), 100))
+    # 8. BEC / Urgency & Financial Cues (15 pts)
+    bec_score = bec_cues.get("bec_heuristic_score", 0.0)
+    bec_pts = int(round(bec_score * 15))
+    has_bec = bec_cues.get("is_bec_suspect", False)
+    breakdown.append({
+        "category": "Social Engineering & BEC Signals",
+        "points": bec_pts,
+        "max_points": 15,
+        "flagged": has_bec or bec_pts > 5,
+        "detail": f"Detected urgency keywords and financial/wire transfer indicators (score {bec_score})" if bec_pts > 0 else "Normal conversational tone"
+    })
 
-    if final_score >= 75:
-        risk_level = "Critical"
-    elif final_score >= 50:
-        risk_level = "High"
-    elif final_score >= 25:
-        risk_level = "Medium"
+    # Total summation
+    total_raw = ml_pts + spf_pts + dkim_pts + dmarc_pts + domain_pts + hosting_pts + actual_spoof_pts + bec_pts
+    final_score = min(100, max(0, total_raw))
+
+    # Determine Verdict & Severity
+    if final_score >= 90:
+        verdict = "CRITICAL: High-Risk Fraud / BEC Attack"
+        risk_level = "CRITICAL"
+        verdict_color = "#dc2626"
+    elif final_score >= 70:
+        verdict = "MALICIOUS: Confirmed Phishing Attack"
+        risk_level = "HIGH"
+        verdict_color = "#ef4444"
+    elif final_score >= 40:
+        verdict = "SUSPICIOUS: Security Policy Anomaly"
+        risk_level = "MEDIUM"
+        verdict_color = "#f59e0b"
     else:
-        risk_level = "Low"
+        verdict = "LEGITIMATE: Clean Communication"
+        risk_level = "LOW"
+        verdict_color = "#10b981"
 
     return {
-        "score": final_score,
+        "fraud_score": final_score,
         "risk_level": risk_level,
-        "factors": factors
+        "verdict": verdict,
+        "verdict_color": verdict_color,
+        "breakdown": breakdown
     }
-
-def record_and_correlate(
-    case_id: str,
-    domain: str,
-    originating_ip: Optional[str],
-    label: str = "Investigation",
-    score: int = 50,
-    risk_level: str = "Medium"
-) -> Optional[Dict[str, Any]]:
-    """
-    Updates the NetworkX campaign correlation graph and detects multi-case threat links.
-    """
-    global _campaign_graph
-
-    # Add Case Node
-    _campaign_graph.add_node(
-        case_id,
-        label=f"Case: {case_id}",
-        type="case",
-        score=score,
-        risk_level=risk_level
-    )
-    
-    if domain:
-        _campaign_graph.add_node(domain, label=f"Domain: {domain}", type="domain")
-        _campaign_graph.add_edge(case_id, domain, relation="sender_domain")
-
-    if originating_ip:
-        _campaign_graph.add_node(originating_ip, label=f"IP: {originating_ip}", type="ip")
-        _campaign_graph.add_edge(case_id, originating_ip, relation="originating_ip")
-
-    # Check how many cases share this domain or IP
-    related_cases = set()
-    if originating_ip and _campaign_graph.has_node(originating_ip):
-        for predecessor in _campaign_graph.predecessors(originating_ip):
-            if predecessor != case_id and _campaign_graph.nodes[predecessor].get("type") == "case":
-                related_cases.add(predecessor)
-
-    if domain and _campaign_graph.has_node(domain):
-        for predecessor in _campaign_graph.predecessors(domain):
-            if predecessor != case_id and _campaign_graph.nodes[predecessor].get("type") == "case":
-                related_cases.add(predecessor)
-
-    if len(related_cases) > 0:
-        camp_id = f"CMP-{abs(hash(originating_ip or domain)) % 10000:04d}"
-        
-        # Add Campaign Node and link
-        _campaign_graph.add_node(camp_id, label=f"Campaign: {camp_id}", type="campaign", risk_level="Critical")
-        _campaign_graph.add_edge(camp_id, case_id, relation="campaign_target")
-        for rel_case in related_cases:
-            _campaign_graph.add_edge(camp_id, rel_case, relation="campaign_target")
-
-        return {
-            "campaign_id": camp_id,
-            "shared_ip": originating_ip,
-            "shared_domain": domain,
-            "related_cases_count": len(related_cases) + 1
-        }
-    return None
-
-def get_campaign_graph_data() -> Dict[str, Any]:
-    """
-    Exports the NetworkX graph as structured nodes and edges for Cytoscape / D3 frontend visualization.
-    """
-    global _campaign_graph
-
-    nodes = []
-    for node_id, data in _campaign_graph.nodes(data=True):
-        nodes.append({
-            "id": str(node_id),
-            "label": data.get("label", str(node_id)),
-            "type": data.get("type", "entity"),
-            "risk_level": data.get("risk_level"),
-            "score": data.get("score"),
-            "details": {k: v for k, v in data.items() if k not in ["label", "type", "risk_level", "score"]}
-        })
-
-    edges = []
-    for u, v, data in _campaign_graph.edges(data=True):
-        edges.append({
-            "source": str(u),
-            "target": str(v),
-            "relation": data.get("relation", "connected_to")
-        })
-
-    case_count = sum(1 for n in nodes if n["type"] == "case")
-    campaign_count = sum(1 for n in nodes if n["type"] == "campaign")
-
-    return {
-        "nodes": nodes,
-        "edges": edges,
-        "total_cases": case_count,
-        "total_campaigns": campaign_count
-    }
-
-def rehydrate_graph_from_db(cases: List[Dict[str, Any]]):
-    """
-    Rebuilds the in-memory NetworkX graph from persisted cases on server startup.
-    """
-    global _campaign_graph
-    _campaign_graph.clear()
-    
-    for c in reversed(cases):
-        case_id = c.get("id")
-        headers = c.get("headers", {})
-        from_hdr = headers.get("from_header", "")
-        domain = from_hdr.split("@")[-1].rstrip(">").strip() if "@" in from_hdr else ""
-        trace = c.get("trace", [])
-        orig_ip = trace[0].get("ip") if trace else None
-        
-        fraud_score = c.get("fraud_score", {})
-        score = fraud_score.get("score", 50)
-        risk = fraud_score.get("risk_level", "Low")
-        
-        record_and_correlate(case_id, domain, orig_ip, score=score, risk_level=risk)
-

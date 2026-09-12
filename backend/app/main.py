@@ -10,8 +10,12 @@ from typing import Optional, List, Dict, Any
 from app.schemas import (
     AnalyzeResponse, ClassifyRequest, DetectionResult, HeaderDetails,
     AuthResults, RelayHop, DomainIntel, FraudScoreBreakdown, CampaignMatch,
-    EvidenceSeal, URLThreatDetails, AttachmentDetails, CampaignGraphResponse
+    EvidenceSeal, URLThreatDetails, AttachmentDetails, CampaignGraphResponse,
+    PredictRequest, PredictResponse
 )
+from app.services.tfidf_predictor import get_tfidf_predictor
+from app.services.distilbert_predictor import get_distilbert_predictor
+from app.services import ml_service
 from app.detection import classify_email
 from app.forensics import parse_eml_bytes, extract_hops, check_authentication_records
 from app.geointel import geolocate_ip, domain_intel
@@ -22,10 +26,18 @@ from app.mailbox_worker import router as mailbox_router, background_mailbox_sync
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Initializes SQLite schema, rehydrates graph, and starts real-time mailbox background worker."""
+    """Initializes SQLite schema, rehydrates graph, preloads ML models, and starts real-time mailbox background worker."""
     init_db()
     existing_cases = get_all_cases(limit=100)
     rehydrate_graph_from_db(existing_cases)
+
+    # Preload the TF-IDF model once at application startup
+    tfidf_predictor = get_tfidf_predictor()
+    tfidf_predictor.load()
+
+    # Preload the DistilBERT 3-class model once at application startup
+    distilbert_predictor = get_distilbert_predictor()
+    distilbert_predictor.load()
     
     # Launch automated background mailbox watcher loop
     sync_task = asyncio.create_task(background_mailbox_sync_loop(poll_interval_seconds=15))
@@ -68,6 +80,24 @@ def classify_text_endpoint(req: ClassifyRequest):
     """Quick text-only classification endpoint for subject and body."""
     result = classify_email(req.text)
     return DetectionResult(**result)
+
+@app.post("/predict", response_model=PredictResponse)
+def predict_endpoint(req: PredictRequest):
+    """
+    Multi-model email threat prediction endpoint.
+    Runs both TF-IDF and DistilBERT 3-class models, returns per-model
+    predictions plus a combined NLP analysis.
+    """
+    text = req.get_content()
+    if not text:
+        raise HTTPException(status_code=400, detail="Field 'email_text' or 'text' must not be empty.")
+
+    try:
+        result = ml_service.predict_all(text)
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Prediction failed: {str(e)}")
+
 
 @app.post("/analyze", response_model=AnalyzeResponse)
 async def analyze_email_endpoint(

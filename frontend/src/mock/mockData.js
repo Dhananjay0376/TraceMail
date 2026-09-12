@@ -1,6 +1,7 @@
 // Comprehensive Mock Store for TraceMail Cybersecurity Intelligence Platform
 // TODO: connect to backend API for live ingestion, threat intelligence feeds, and cases
 
+// Used by the no-credentials demo flow in AuthModal.
 export const DEMO_USER = {
   id: "demo-shri",
   isDemo: true,
@@ -13,7 +14,6 @@ export const DEMO_USER = {
 };
 
 export const Demo_User = DEMO_USER;
-
 export const MOCK_STATS = {
   totalScanned: 14892,
   scannedGrowth: "+12.4% this week",
@@ -519,3 +519,4 @@ export const MOCK_GLOSSARY = [
     plainEnglish: "A large network identifier controlled by internet service providers, cloud datacenters, or telecom operators. Cyber attackers often purchase bulletproof VPS hosting in foreign ASNs that ignore legal copyright or crime takedown requests."
   }
 ];
+

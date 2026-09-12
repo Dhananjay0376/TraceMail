@@ -223,10 +223,6 @@ export default function OnboardingScreen({ onCompleteOnboarding, onSkip, current
         {/* STEP 1: CREATE OR JOIN ORGANIZATION */}
         {step === 1 && (
           <div className="space-y-6 animate-fade-in font-sans text-xs">
-            <p className="text-slate-300">
-              Welcome to TraceMail! Let's initialize your corporate cyber defense perimeter.
-            </p>
-
             {/* Two Choice Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div
@@ -243,9 +239,6 @@ export default function OnboardingScreen({ onCompleteOnboarding, onSkip, current
                   </div>
                   <h3 className="font-bold text-white text-sm">Create a new organization</h3>
                 </div>
-                <p className="text-slate-400 text-[11px] mt-2 leading-relaxed">
-                  Start a fresh security workspace and invite your analysts and security responders.
-                </p>
               </div>
 
               <div
@@ -262,9 +255,6 @@ export default function OnboardingScreen({ onCompleteOnboarding, onSkip, current
                   </div>
                   <h3 className="font-bold text-white text-sm">Join an existing one</h3>
                 </div>
-                <p className="text-slate-400 text-[11px] mt-2 leading-relaxed">
-                  Enter an invite code provided by your organization's security administrator.
-                </p>
               </div>
             </div>
 
@@ -280,7 +270,7 @@ export default function OnboardingScreen({ onCompleteOnboarding, onSkip, current
                     type="text"
                     value={orgName}
                     onChange={(e) => setOrgName(e.target.value)}
-                    placeholder="e.g. Acme Bank Security Team"
+                    placeholder=""
                     className={`w-full px-4 py-3 rounded-xl bg-[#050814] border text-white focus:outline-none text-xs transition-all ${
                       !orgName.trim() ? 'border-amber-500/40 focus:border-amber-400' : 'border-emerald-500/40 focus:border-emerald-400'
                     }`}
@@ -296,7 +286,7 @@ export default function OnboardingScreen({ onCompleteOnboarding, onSkip, current
                     type="text"
                     value={domain}
                     onChange={(e) => setDomain(e.target.value)}
-                    placeholder="e.g. acmebank.com"
+                    placeholder=""
                     className={`w-full px-4 py-3 rounded-xl bg-[#050814] border text-white focus:outline-none text-xs font-mono transition-all ${
                       !domain.trim() ? 'border-amber-500/40 focus:border-amber-400' : 'border-emerald-500/40 focus:border-emerald-400'
                     }`}
@@ -314,7 +304,7 @@ export default function OnboardingScreen({ onCompleteOnboarding, onSkip, current
                     type="text"
                     value={inviteCode}
                     onChange={(e) => setInviteCode(e.target.value)}
-                    placeholder="e.g. SEC-ACME-8924"
+                    placeholder=""
                     className={`w-full px-4 py-3 rounded-xl bg-[#050814] border text-white focus:outline-none text-xs font-mono uppercase tracking-widest transition-all ${
                       !inviteCode.trim() ? 'border-amber-500/40 focus:border-amber-400' : 'border-emerald-500/40 focus:border-emerald-400'
                     }`}
@@ -368,9 +358,6 @@ export default function OnboardingScreen({ onCompleteOnboarding, onSkip, current
                     OAuth 2.0
                   </span>
                 </div>
-                <p className="text-slate-400 text-[11px] mt-2">
-                  Real-time Google Workspace webhook ingestion and spam flag synchronization.
-                </p>
               </div>
 
               <div
@@ -390,9 +377,6 @@ export default function OnboardingScreen({ onCompleteOnboarding, onSkip, current
                     Microsoft 365
                   </span>
                 </div>
-                <p className="text-slate-400 text-[11px] mt-2">
-                  Exchange Graph API connector with automated tenant quarantine actions.
-                </p>
               </div>
             </div>
 
@@ -433,20 +417,13 @@ export default function OnboardingScreen({ onCompleteOnboarding, onSkip, current
         {/* STEP 3: INVITE TEAM MEMBERS */}
         {step === 3 && (
           <div className="space-y-6 animate-fade-in font-sans text-xs">
-            <div>
-              <h3 className="text-sm font-bold text-white mb-1">Invite Team Members</h3>
-              <p className="text-slate-300">
-                Add security analysts and colleagues so they can collaborate on incident cases.
-              </p>
-            </div>
-
             {/* Quick Add Form */}
             <div className="flex gap-2">
               <input
                 type="email"
                 value={newEmailInput}
                 onChange={(e) => setNewEmailInput(e.target.value)}
-                placeholder="colleague@acmebank.com"
+                placeholder="Enter Gmail address"
                 className="flex-1 px-4 py-2.5 rounded-xl bg-[#050814] border border-white/10 text-white placeholder-slate-500 focus:border-redrob-blue focus:outline-none text-xs font-mono"
               />
               <select
@@ -470,12 +447,7 @@ export default function OnboardingScreen({ onCompleteOnboarding, onSkip, current
 
             {/* Team List */}
             <div className="space-y-2 max-h-48 overflow-y-auto">
-              {teamEmails.length === 0 ? (
-                <div className="p-3 rounded-xl bg-[#050814]/50 border border-white/5 text-slate-500 text-center text-[11px]">
-                  No invitations added yet. You can invite team members now or later from Settings.
-                </div>
-              ) : (
-                teamEmails.map((member, idx) => (
+              {teamEmails.map((member, idx) => (
                   <div
                     key={idx}
                     className="flex items-center justify-between p-3 rounded-xl bg-[#050814] border border-white/5"
@@ -497,18 +469,27 @@ export default function OnboardingScreen({ onCompleteOnboarding, onSkip, current
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   </div>
-                ))
-              )}
+                ))}
             </div>
 
             <div className="flex items-center justify-between pt-6 border-t border-white/10">
-              <button
-                type="button"
-                onClick={handleSkipAll}
-                className="text-xs text-slate-400 hover:text-white underline cursor-pointer"
-              >
-                Skip, I'll do this later
-              </button>
+              <div className="flex items-center gap-4">
+                <button
+                  type="button"
+                  onClick={() => setStep(2)}
+                  className="px-4 py-2.5 rounded-xl border border-white/10 text-slate-300 hover:text-white text-xs flex items-center gap-1.5 transition-colors"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  <span>Back</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSkipAll}
+                  className="text-xs text-slate-400 hover:text-white underline cursor-pointer"
+                >
+                  Skip, I'll do this later
+                </button>
+              </div>
 
               <button
                 type="button"
