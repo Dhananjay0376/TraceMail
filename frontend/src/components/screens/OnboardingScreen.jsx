@@ -180,10 +180,6 @@ export default function OnboardingScreen({ onCompleteOnboarding, onSkip, current
         {/* STEP 1: CREATE OR JOIN ORGANIZATION */}
         {step === 1 && (
           <div className="space-y-6 animate-fade-in font-sans text-xs">
-            <p className="text-slate-300">
-              Welcome to TraceMail! Let's initialize your corporate cyber defense perimeter.
-            </p>
-
             {/* Two Choice Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div
@@ -200,9 +196,6 @@ export default function OnboardingScreen({ onCompleteOnboarding, onSkip, current
                   </div>
                   <h3 className="font-bold text-white text-sm">Create a new organization</h3>
                 </div>
-                <p className="text-slate-400 text-[11px] mt-2 leading-relaxed">
-                  Start a fresh security workspace and invite your analysts and security responders.
-                </p>
               </div>
 
               <div
@@ -219,9 +212,6 @@ export default function OnboardingScreen({ onCompleteOnboarding, onSkip, current
                   </div>
                   <h3 className="font-bold text-white text-sm">Join an existing one</h3>
                 </div>
-                <p className="text-slate-400 text-[11px] mt-2 leading-relaxed">
-                  Enter an invite code provided by your organization's security administrator.
-                </p>
               </div>
             </div>
 
@@ -325,9 +315,6 @@ export default function OnboardingScreen({ onCompleteOnboarding, onSkip, current
                     OAuth 2.0
                   </span>
                 </div>
-                <p className="text-slate-400 text-[11px] mt-2">
-                  Real-time Google Workspace webhook ingestion and spam flag synchronization.
-                </p>
               </div>
 
               <div
@@ -347,9 +334,6 @@ export default function OnboardingScreen({ onCompleteOnboarding, onSkip, current
                     Microsoft 365
                   </span>
                 </div>
-                <p className="text-slate-400 text-[11px] mt-2">
-                  Exchange Graph API connector with automated tenant quarantine actions.
-                </p>
               </div>
             </div>
 
@@ -390,13 +374,6 @@ export default function OnboardingScreen({ onCompleteOnboarding, onSkip, current
         {/* STEP 3: INVITE TEAM MEMBERS */}
         {step === 3 && (
           <div className="space-y-6 animate-fade-in font-sans text-xs">
-            <div>
-              <h3 className="text-sm font-bold text-white mb-1">Invite Team Members</h3>
-              <p className="text-slate-300">
-                Add security analysts and colleagues so they can collaborate on incident cases.
-              </p>
-            </div>
-
             {/* Quick Add Form */}
             <div className="flex gap-2">
               <input
@@ -427,12 +404,7 @@ export default function OnboardingScreen({ onCompleteOnboarding, onSkip, current
 
             {/* Team List */}
             <div className="space-y-2 max-h-48 overflow-y-auto">
-              {teamEmails.length === 0 ? (
-                <div className="p-3 rounded-xl bg-[#050814]/50 border border-white/5 text-slate-500 text-center text-[11px]">
-                  No invitations added yet. You can invite team members now or later from Settings.
-                </div>
-              ) : (
-                teamEmails.map((member, idx) => (
+              {teamEmails.map((member, idx) => (
                   <div
                     key={idx}
                     className="flex items-center justify-between p-3 rounded-xl bg-[#050814] border border-white/5"
@@ -454,8 +426,7 @@ export default function OnboardingScreen({ onCompleteOnboarding, onSkip, current
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   </div>
-                ))
-              )}
+                ))}
             </div>
 
             <div className="flex items-center justify-between pt-6 border-t border-white/10">
