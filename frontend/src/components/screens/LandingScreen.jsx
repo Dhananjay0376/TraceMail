@@ -23,6 +23,7 @@ import {
   Activity,
 } from 'lucide-react';
 import MarqueeTicker from '../vfx/MarqueeTicker';
+import PixelCard from '../vfx/PixelCard';
 
 // ─── Hero Carousel Slides ─────────────────────────────────────────────────────
 const heroSlides = [
@@ -107,56 +108,56 @@ function Pill({ children, color = 'blue' }) {
 }
 
 // ─── Product Suite Card ───────────────────────────────────────────────────────
-function ProductCard({ title, description, gradientFrom, gradientTo, overlayIcon: Icon, ctaLabel, onClick, badge }) {
+function ProductCard({ title, description, gradientFrom, gradientTo, overlayIcon: Icon, badge, onClick, pixelColors }) {
   return (
-    <div className="relative rounded-[20px] overflow-hidden group cursor-pointer" onClick={onClick}>
-      {/* Background gradient with cinematic look */}
+    <PixelCard
+      colors={pixelColors || '#38bdf8,#0ea5e9,#6366f1,#00e3d8'}
+      variant="blue"
+      gap={6}
+      speed={40}
+      className={`rounded-[20px] overflow-hidden cursor-pointer group`}
+      style={{ minHeight: '340px' }}
+      onClick={onClick}
+    >
+      {/* Background gradient */}
       <div
         className={`absolute inset-0 bg-gradient-to-br ${gradientFrom} ${gradientTo} transition-transform duration-700 group-hover:scale-105`}
       />
       {/* Subtle grid overlay */}
       <div className="absolute inset-0 opacity-10 bg-[url('data:image/svg+xml,%3Csvg%20width%3D%2240%22%20height%3D%2240%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M0%200h40v40H0z%22%20fill%3D%22none%22/%3E%3Cpath%20d%3D%22M40%200v40M0%2040h40%22%20stroke%3D%22%23fff%22%20stroke-width%3D%220.5%22/%3E%3C/svg%3E')]" />
-      {/* Content */}
-      <div className="relative z-10 p-7 flex flex-col min-h-[380px]">
-        {/* Badge */}
+      {/* Top: Badge + Icon widget */}
+      <div className="absolute top-0 left-0 right-0 p-7 z-20">
         {badge && (
           <span className="inline-flex items-center gap-1.5 text-[10px] font-mono font-bold text-white/70 bg-white/10 border border-white/20 rounded-full px-2.5 py-1 w-fit mb-4">
             <span className="w-1.5 h-1.5 rounded-full bg-[#53e097] animate-pulse" />
             {badge}
           </span>
         )}
-        {/* Mock UI widget floating in the card */}
-        <div className="flex-1 flex items-center justify-center py-4">
-          <div className="w-full max-w-[220px] bg-black/40 backdrop-blur-sm border border-white/10 rounded-2xl p-4 shadow-2xl">
-            <div className="flex items-center gap-2 mb-3">
-              <Icon className="w-5 h-5 text-white/80" />
-              <span className="text-xs font-mono text-white/60">{title}</span>
-            </div>
-            <div className="space-y-1.5">
-              <div className="h-2 bg-white/20 rounded-full w-full" />
-              <div className="h-2 bg-white/15 rounded-full w-4/5" />
-              <div className="h-2 bg-white/10 rounded-full w-3/5" />
-            </div>
-            <div className="mt-3 h-8 bg-gradient-to-r from-white/5 to-transparent rounded-xl border border-white/10 flex items-center px-3">
-              <span className="text-[10px] text-white/40 font-mono">LIVE ANALYSIS</span>
-            </div>
+        {/* Floating mini widget */}
+        <div className="w-full max-w-[200px] bg-black/40 backdrop-blur-sm border border-white/10 rounded-2xl p-4 shadow-2xl">
+          <div className="flex items-center gap-2 mb-3">
+            <Icon className="w-5 h-5 text-white/80" />
+            <span className="text-xs font-mono text-white/60">{title}</span>
+          </div>
+          <div className="space-y-1.5">
+            <div className="h-2 bg-white/20 rounded-full w-full" />
+            <div className="h-2 bg-white/15 rounded-full w-4/5" />
+            <div className="h-2 bg-white/10 rounded-full w-3/5" />
+          </div>
+          <div className="mt-3 h-8 bg-gradient-to-r from-white/5 to-transparent rounded-xl border border-white/10 flex items-center px-3">
+            <span className="text-[10px] text-white/40 font-mono">LIVE ANALYSIS</span>
           </div>
         </div>
-        {/* Bottom content */}
-        <div className="mt-auto">
-          <h3 className="text-xl font-bold text-white mb-2">{title}</h3>
-          <p className="text-sm text-white/60 leading-relaxed mb-5">{description}</p>
-          <button
-            onClick={(e) => { e.stopPropagation(); onClick && onClick(); }}
-            className="px-5 py-2 rounded-full bg-white text-black text-xs font-bold font-mono uppercase tracking-wider hover:bg-white/90 transition-all"
-          >
-            {ctaLabel}
-          </button>
-        </div>
       </div>
-    </div>
+      {/* Bottom: Title + Description */}
+      <div className="absolute bottom-0 left-0 right-0 p-7 z-20 bg-gradient-to-t from-black/70 via-black/20 to-transparent">
+        <h3 className="text-xl font-bold text-white mb-2">{title}</h3>
+        <p className="text-sm text-white/60 leading-relaxed">{description}</p>
+      </div>
+    </PixelCard>
   );
 }
+
 
 // ─── FAQ Accordion Item ───────────────────────────────────────────────────────
 function FAQItem({ q, a, isOpen, onToggle }) {
@@ -496,14 +497,6 @@ export default function LandingScreen({
             <p className="text-white/60 text-lg max-w-2xl font-sans leading-relaxed">
               Explore tools built for email security, threat attribution, compliance, and real-time intelligence.
             </p>
-            <div className="mt-8 flex items-center gap-4">
-              <button
-                onClick={onStartAnalysis}
-                className="px-8 py-3.5 rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 text-white text-sm font-bold shadow-[0_0_20px_rgba(6,182,212,0.3)] hover:shadow-[0_0_30px_rgba(6,182,212,0.5)] hover:scale-105 transition-all"
-              >
-                Explore TraceMail
-              </button>
-            </div>
           </div>
 
           {/* 3-col immersive card grid */}
