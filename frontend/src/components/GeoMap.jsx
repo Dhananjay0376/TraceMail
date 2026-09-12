@@ -102,7 +102,7 @@ export default function GeoMap({ hops, originGeo, originIp }) {
             {/* Dark Mode CartoDB TileLayer */}
             <TileLayer
               attribution='&copy; <a href="https://carto.com/">CartoDB</a> contributors'
-              url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+              url="https://cartodb-basemaps-{s}.global.ssl.fastly.net/dark_all/{z}/{x}/{y}.png"
             />
 
             {/* Polyline Path between hops */}
