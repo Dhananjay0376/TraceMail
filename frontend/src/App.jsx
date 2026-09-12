@@ -177,7 +177,7 @@ export default function App() {
           sessionStorage.removeItem('tracemail_google_auth_intent');
           window.setTimeout(async () => {
             await signOutUser();
-            loadUserData(null);
+            loadUserData(DEMO_USER);
             setCurrentScreen('landing');
             setAuthMode('signup');
             setIsAuthOpen(true);
@@ -201,7 +201,7 @@ export default function App() {
           console.warn('Error processing auth state change:', err);
         }
       } else if (event === 'SIGNED_OUT') {
-        loadUserData(null);
+        loadUserData(DEMO_USER);
       }
     });
 
@@ -220,10 +220,10 @@ export default function App() {
           }
         } else {
           // No real session — show landing with Login/Signup in Navbar
-          loadUserData(null);
+          loadUserData(DEMO_USER);
         }
       } catch (_) {
-        loadUserData(null);
+        loadUserData(DEMO_USER);
       }
     };
 
