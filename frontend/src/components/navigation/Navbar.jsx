@@ -100,9 +100,6 @@ export default function Navbar({
           <span className="font-extrabold tracking-tight text-sm sm:text-base text-white">
             Trace<span className="text-transparent bg-clip-text bg-gradient-to-r from-redrob-blue to-redrob-aqua">Mail</span>
           </span>
-          <span className="text-[9px] font-mono px-1.5 py-0.5 rounded-full bg-redrob-blue/15 border border-redrob-blue/30 text-redrob-blue font-bold">
-            v2.0
-          </span>
         </div>
       </div>
     </div>

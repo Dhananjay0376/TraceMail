@@ -356,82 +356,82 @@ export default function DashboardScreen({
             />
           </div>
 
-          {/* Main Grid: Recent Alerts Table & Mini World Map Widget */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Left 2 Cols: Recent Inbound Alerts Table in Paper Cut Well */}
-            <div className="lg:col-span-2 p-6 sm:p-7 rounded-[32px] bg-gradient-to-b from-[#0A4174] to-[#001D39] border border-[#49769F]/30 paper-cut-shadow font-mono flex flex-col">
-              <div className="flex items-center justify-between pb-5 border-b border-[#49769F]/30">
-                <div>
-                  <h3 className="text-sm sm:text-base font-extrabold uppercase tracking-wider text-white font-mono flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 rounded-full bg-[#7BBDE8] animate-ping" />
-                    Recent Alerts
-                  </h3>
-                  <p className="text-xs text-[#6EA2B3] font-sans mt-1">
-                    Flagged inbound emails prioritized by fraud risk score.
-                  </p>
-                </div>
-                <button
-                  onClick={() => onNavigate('alerts')}
-                  className="px-4 py-1.5 rounded-full bg-[#49769F]/30 hover:bg-[#7BBDE8] hover:text-[#001D39] text-[#7BBDE8] text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-all paper-pill"
-                >
-                  <span>View All Alerts</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </button>
+          {/* Main Layout: Full Width Recent Alerts Table */}
+          <div className="w-full p-6 sm:p-7 rounded-[32px] bg-gradient-to-b from-[#0A4174] to-[#001D39] border border-[#49769F]/30 paper-cut-shadow font-mono flex flex-col">
+            <div className="flex items-center justify-between pb-5 border-b border-[#49769F]/30">
+              <div>
+                <h3 className="text-sm sm:text-base font-extrabold uppercase tracking-wider text-white font-mono flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#7BBDE8] animate-ping" />
+                  Recent Alerts
+                </h3>
+                <p className="text-xs text-[#6EA2B3] font-sans mt-1">
+                  Flagged inbound emails prioritized by fraud risk score.
+                </p>
               </div>
+              <button
+                onClick={() => onNavigate('alerts')}
+                className="px-4 py-1.5 rounded-full bg-[#49769F]/30 hover:bg-[#7BBDE8] hover:text-[#001D39] text-[#7BBDE8] text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-all paper-pill"
+              >
+                <span>View All Alerts</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
 
-              <div className="mt-5 space-y-3 flex-1">
-                {displayAlerts.length === 0 ? (
-                  <div className="p-8 text-center text-xs text-[#6EA2B3] font-sans rounded-2xl bg-[#00152b] border border-[#49769F]/20">
-                    <p className="font-bold text-white text-sm mb-1">No active alerts</p>
-                    <p>Your account has zero flagged threats. Use "+ Analyze New Email" to scan suspicious messages.</p>
-                  </div>
-                ) : (
-                  displayAlerts.slice(0, 5).map((alert) => (
-                    <div
-                      key={alert.id}
-                      className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-2xl bg-[#00152b] border border-[#49769F]/20 hover:border-[#7BBDE8]/40 transition-all paper-inset-well"
-                    >
-                      <div className="space-y-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs sm:text-sm font-bold text-white truncate max-w-md font-sans">
-                            {alert.title}
-                          </span>
-                          <span className="text-[10px] text-[#6EA2B3] shrink-0 font-mono">{alert.time}</span>
-                        </div>
-                        <div className="text-xs text-[#4E8EA2] truncate">
-                          <span className="text-[#6EA2B3]/70">From: </span>
-                          <span className="text-[#7BBDE8] font-mono">{alert.sender}</span>
-                        </div>
+            <div className="mt-5 space-y-3 flex-1">
+              {displayAlerts.length === 0 ? (
+                <div className="p-8 text-center text-xs text-[#6EA2B3] font-sans rounded-2xl bg-[#00152b] border border-[#49769F]/20">
+                  <p className="font-bold text-white text-sm mb-1">No active alerts</p>
+                  <p>Your account has zero flagged threats. Use "+ Analyze New Email" to scan suspicious messages.</p>
+                </div>
+              ) : (
+                displayAlerts.slice(0, 5).map((alert) => (
+                  <div
+                    key={alert.id}
+                    className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-2xl bg-[#00152b] border border-[#49769F]/20 hover:border-[#7BBDE8]/40 transition-all paper-inset-well"
+                  >
+                    <div className="space-y-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs sm:text-sm font-bold text-white truncate max-w-md font-sans">
+                          {alert.title}
+                        </span>
+                        <span className="text-[10px] text-[#6EA2B3] shrink-0 font-mono">{alert.time}</span>
                       </div>
-
-                      <div className="flex items-center gap-3 shrink-0">
-                        <RiskBadge score={alert.score} size="sm" />
-                        <button
-                          onClick={() => onSelectSample(alert.sampleId || 'sample-wire-fraud')}
-                          className="px-3.5 py-1.5 rounded-full bg-[#7BBDE8] hover:bg-white text-[#001D39] text-xs font-extrabold transition-all cursor-pointer flex items-center gap-1 paper-pill spring-hover shadow-md"
-                        >
-                          <span>Inspect</span>
-                          <ExternalLink className="w-3 h-3" />
-                        </button>
+                      <div className="text-xs text-[#4E8EA2] truncate">
+                        <span className="text-[#6EA2B3]/70">From: </span>
+                        <span className="text-[#7BBDE8] font-mono">{alert.sender}</span>
                       </div>
                     </div>
-                  ))
-                )}
-              </div>
 
-              <div className="pt-4 mt-4 border-t border-[#49769F]/30 flex items-center justify-between text-xs text-[#6EA2B3]">
-                <span>Showing top active alerts</span>
-                <span className="text-[#7BBDE8] font-mono font-bold flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-[#7BBDE8] animate-pulse" />
-                  Perimeter Gateway: Online
-                </span>
-              </div>
+                    <div className="flex items-center gap-3 shrink-0">
+                      <RiskBadge score={alert.score} size="sm" />
+                      <button
+                        onClick={() => onSelectSample(alert.sampleId || 'sample-wire-fraud')}
+                        className="px-3.5 py-1.5 rounded-full bg-[#7BBDE8] hover:bg-white text-[#001D39] text-xs font-extrabold transition-all cursor-pointer flex items-center gap-1 paper-pill spring-hover shadow-md"
+                      >
+                        <span>Inspect</span>
+                        <ExternalLink className="w-3 h-3" />
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
 
-            {/* Right 1 Col: Small World Map Widget */}
-            <div className="lg:col-span-1 h-full rounded-[32px] overflow-hidden border border-[#49769F]/30 paper-cut-shadow">
-              <MiniWorldMap onSelectOrigin={(orig) => onNavigate('result')} />
+            <div className="pt-4 mt-4 border-t border-[#49769F]/30 flex items-center justify-between text-xs text-[#6EA2B3]">
+              <span>Showing top active alerts</span>
+              <span className="text-[#7BBDE8] font-mono font-bold flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-[#7BBDE8] animate-pulse" />
+                Perimeter Gateway: Online
+              </span>
             </div>
+          </div>
+
+          {/* Shifted Section: World Map Widget Below Recent Alerts */}
+          <div className="w-full mt-8 rounded-[32px] overflow-hidden border border-[#49769F]/30 paper-cut-shadow">
+            <MiniWorldMap
+              origins={displayAlerts.length > 0 ? MOCK_ATTACK_ORIGINS : []}
+              onSelectOrigin={(orig) => onNavigate('result')}
+            />
           </div>
         </>
       )}

@@ -1,9 +1,11 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { Globe, ShieldAlert, Navigation } from 'lucide-react';
 import { MOCK_ATTACK_ORIGINS } from '../../mock/mockData';
 
-export default function MiniWorldMap({ onSelectOrigin }) {
+export default function MiniWorldMap({ onSelectOrigin, origins = null }) {
   const [hoveredOrigin, setHoveredOrigin] = useState(null);
+
+  const activeOrigins = origins !== null ? origins : MOCK_ATTACK_ORIGINS;
 
   // Convert lat/lon to percentage position on simple Mercator projection
   const getCoordinates = (lat, lon) => {
@@ -24,12 +26,12 @@ export default function MiniWorldMap({ onSelectOrigin }) {
           </h3>
         </div>
         <span className="text-[11px] font-mono text-cyan-400 bg-cyan-950/60 px-2 py-0.5 rounded border border-cyan-800">
-          6 Active Geopolitical Hotspots
+          {activeOrigins.length} Active Geopolitical Hotspots
         </span>
       </div>
 
       {/* SVG Stylized World Map Container */}
-      <div className="relative flex-1 min-h-[200px] my-3 rounded-xl bg-[#070b14] border border-slate-800/80 overflow-hidden flex items-center justify-center">
+      <div className="relative flex-1 min-h-[220px] my-3 rounded-xl bg-[#070b14] border border-slate-800/80 overflow-hidden flex items-center justify-center">
         {/* Subtle grid background */}
         <div
           className="absolute inset-0 opacity-15"
@@ -61,7 +63,7 @@ export default function MiniWorldMap({ onSelectOrigin }) {
         </svg>
 
         {/* Pulsating Attack Nodes */}
-        {MOCK_ATTACK_ORIGINS.map((origin) => {
+        {activeOrigins.map((origin) => {
           const { x, y } = getCoordinates(origin.lat, origin.lon);
           const isSelected = hoveredOrigin?.id === origin.id;
 
@@ -107,27 +109,33 @@ export default function MiniWorldMap({ onSelectOrigin }) {
 
       {/* Origin City Legend Bar */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-2 border-t border-slate-800/80">
-        {MOCK_ATTACK_ORIGINS.slice(0, 6).map((o) => (
-          <div
-            key={o.id}
-            onClick={() => onSelectOrigin && onSelectOrigin(o)}
-            className="p-2 rounded-lg bg-slate-900/60 hover:bg-slate-800 border border-slate-800/60 cursor-pointer transition-all flex items-center justify-between text-[11px] font-mono"
-          >
-            <div className="flex items-center gap-1.5 truncate">
-              <span
-                className={`w-2 h-2 rounded-full shrink-0 ${
-                  o.level === 'critical'
-                    ? 'bg-red-500'
-                    : o.level === 'high'
-                    ? 'bg-orange-500'
-                    : 'bg-amber-500'
-                }`}
-              />
-              <span className="text-slate-200 truncate">{o.city}</span>
-            </div>
-            <span className="text-cyan-400 font-bold ml-1">{o.threatCount}</span>
+        {activeOrigins.length === 0 ? (
+          <div className="col-span-full py-2 text-center text-xs text-slate-400 font-sans">
+            No active threat origins detected yet. Scan emails to map originating MTA relays.
           </div>
-        ))}
+        ) : (
+          activeOrigins.slice(0, 6).map((o) => (
+            <div
+              key={o.id}
+              onClick={() => onSelectOrigin && onSelectOrigin(o)}
+              className="p-2 rounded-lg bg-slate-900/60 hover:bg-slate-800 border border-slate-800/60 cursor-pointer transition-all flex items-center justify-between text-[11px] font-mono"
+            >
+              <div className="flex items-center gap-1.5 truncate">
+                <span
+                  className={`w-2 h-2 rounded-full shrink-0 ${
+                    o.level === 'critical'
+                      ? 'bg-red-500'
+                      : o.level === 'high'
+                      ? 'bg-orange-500'
+                      : 'bg-amber-500'
+                  }`}
+                />
+                <span className="text-slate-200 truncate">{o.city}</span>
+              </div>
+              <span className="text-cyan-400 font-bold ml-1">{o.threatCount}</span>
+            </div>
+          ))
+        )}
       </div>
     </div>
   );
