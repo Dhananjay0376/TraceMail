@@ -20,7 +20,7 @@ import NotFoundScreen from './components/screens/NotFoundScreen';
 import AmbientAura from './components/vfx/AmbientAura';
 import { MOCK_SAMPLES, MOCK_CASES, MOCK_ALERTS } from './mock/mockData';
 import { CheckCircle2, X } from 'lucide-react';
-import { getCurrentUser } from './lib/supabase';
+import { supabase, getCurrentUser, signOutUser, toTraceMailUser } from './lib/supabase';
 
 // Hash ↔ screen mapping
 const HASH_TO_SCREEN = {
@@ -56,28 +56,26 @@ const SCREEN_TO_HASH = {
 };
 
 export default function App() {
-  // Determine initial screen from URL hash
+  // Determine initial screen from URL hash or OAuth callback parameters
   const getInitialScreen = () => {
     const hash = window.location.hash.toLowerCase();
+    const search = window.location.search.toLowerCase();
+    if (hash.includes('access_token') || hash.includes('code=') || search.includes('code=')) {
+      return 'dashboard';
+    }
     return HASH_TO_SCREEN[hash] || 'landing';
   };
 
   const [currentScreen, setCurrentScreen] = useState(getInitialScreen);
-  const [currentRole, setCurrentRole] = useState('analyst'); // 'analyst' | 'employee' | 'admin'
-  const [currentUser, setCurrentUser] = useState({
-    name: 'Shri',
-    email: 'analyst@acmebank.com',
-    org: 'Acme Bank Security Operations',
-    role: 'analyst',
-    isFirstTime: false,
-  });
-  const [cases, setCases] = useState(MOCK_CASES);
-  const [alerts, setAlerts] = useState(MOCK_ALERTS);
+  const [currentRole, setCurrentRole] = useState('analyst');
+  const [currentUser, setCurrentUser] = useState(null); // null = not logged in (shows Login/Signup in Navbar)
+  const [cases, setCases] = useState([]);
+  const [alerts, setAlerts] = useState([]);
   const [selectedSample, setSelectedSample] = useState(MOCK_SAMPLES[0]);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
-  const [authMode, setAuthMode] = useState('login'); // 'login' | 'signup' | 'demo' | 'forgot'
+  const [authMode, setAuthMode] = useState('login');
   const [isLogoutOpen, setIsLogoutOpen] = useState(false);
-  const [unreadAlerts, setUnreadAlerts] = useState(3);
+  const [unreadAlerts, setUnreadAlerts] = useState(0);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSidebarPinned, setIsSidebarPinned] = useState(false);
   const [toastMessage, setToastMessage] = useState(null);
@@ -112,26 +110,128 @@ export default function App() {
     }
   }, [currentScreen]);
 
-  // Handle Google OAuth redirect — check for active session on mount
+  // Helper to load user profile and data
+  const loadUserData = (user) => {
+    if (!user) {
+      setCurrentUser(null);
+      setCases([]);
+      setAlerts([]);
+      setUnreadAlerts(0);
+      return;
+    }
+    setCurrentUser(user);
+    if (user.role) setCurrentRole(user.role);
+
+    if (user.isDemo) {
+      setCases(MOCK_CASES);
+      setAlerts(MOCK_ALERTS);
+      setUnreadAlerts(3);
+      return;
+    }
+
+    try {
+      const storageKeyCases = `tracemail_cases_${user.id}`;
+      const storageKeyAlerts = `tracemail_alerts_${user.id}`;
+
+      const savedCases = localStorage.getItem(storageKeyCases);
+      setCases(savedCases !== null ? JSON.parse(savedCases) : []);
+
+      const savedAlerts = localStorage.getItem(storageKeyAlerts);
+      if (savedAlerts !== null) {
+        const parsed = JSON.parse(savedAlerts);
+        setAlerts(parsed);
+        setUnreadAlerts(parsed.length);
+      } else {
+        setAlerts([]);
+        setUnreadAlerts(0);
+      }
+    } catch (e) {
+      console.warn('Failed loading user data:', e);
+    }
+  };
+
+  // Handle Supabase Auth Session & OAuth redirect listener
   useEffect(() => {
-    const checkOAuthSession = async () => {
+    const isOAuthRedirect =
+      window.location.href.includes('code=') ||
+      window.location.href.includes('access_token=') ||
+      window.location.hash.includes('access_token');
+
+    // Supabase emits INITIAL_SESSION immediately after subscribing.  This flag
+    // keeps the separate startup check from overwriting a newer auth event.
+    let sessionEventSeen = false;
+
+    const isNewGoogleAccount = (authUser) => {
+      if (authUser.app_metadata?.provider !== 'google') return false;
+      const createdAt = Date.parse(authUser.created_at || '');
+      const lastSignInAt = Date.parse(authUser.last_sign_in_at || '');
+      if (!Number.isFinite(createdAt) || !Number.isFinite(lastSignInAt)) return false;
+      return Date.now() - createdAt < 10 * 60 * 1000 && Math.abs(lastSignInAt - createdAt) < 2 * 60 * 1000;
+    };
+
+    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+      sessionEventSeen = true;
+      if (session?.user) {
+        const googleAuthIntent = sessionStorage.getItem('tracemail_google_auth_intent');
+        if (event === 'SIGNED_IN' && googleAuthIntent === 'login' && isNewGoogleAccount(session.user)) {
+          sessionStorage.removeItem('tracemail_google_auth_intent');
+          window.setTimeout(async () => {
+            await signOutUser();
+            loadUserData(null);
+            setCurrentScreen('landing');
+            setAuthMode('signup');
+            setIsAuthOpen(true);
+            showToast('No TraceMail account exists for this Google address. Create an account to continue.');
+          }, 0);
+          return;
+        }
+        sessionStorage.removeItem('tracemail_google_auth_intent');
+        try {
+          const user = toTraceMailUser(session.user);
+          if (user) {
+            loadUserData(user);
+            const hash = window.location.hash.toLowerCase();
+            const currentTab = HASH_TO_SCREEN[hash] || 'landing';
+            if (event === 'SIGNED_IN' || isOAuthRedirect || currentTab === 'landing') {
+              setCurrentScreen(user.isFirstTime ? 'onboarding' : 'dashboard');
+              showToast(`Welcome back, ${user.name || 'Analyst'}!`);
+            }
+          }
+        } catch (err) {
+          console.warn('Error processing auth state change:', err);
+        }
+      } else if (event === 'SIGNED_OUT') {
+        loadUserData(null);
+      }
+    });
+
+    // Initial check for active session on mount
+    const checkActiveSession = async () => {
       try {
         const user = await getCurrentUser();
-        if (user) {
-          setCurrentUser(user);
-          if (user.role) setCurrentRole(user.role);
-          // If we just came back from Google OAuth (#dashboard in URL), stay there
+        if (sessionEventSeen) return;
+        if (user && !user.isDemo) {
+          loadUserData(user);
           const hash = window.location.hash.toLowerCase();
-          if (hash === '#dashboard' || HASH_TO_SCREEN[hash] === 'dashboard') {
-            setCurrentScreen('dashboard');
-            showToast(`Welcome, ${user.name}! Signed in with Google.`);
+          const currentTab = HASH_TO_SCREEN[hash] || 'landing';
+          if (isOAuthRedirect || currentTab === 'landing') {
+            setCurrentScreen(user.isFirstTime ? 'onboarding' : 'dashboard');
+            showToast(`Welcome back, ${user.name || 'Analyst'}!`);
           }
+        } else {
+          // No real session — show landing with Login/Signup in Navbar
+          loadUserData(null);
         }
       } catch (_) {
-        // No active session — stay on landing
+        loadUserData(null);
       }
     };
-    checkOAuthSession();
+
+    checkActiveSession();
+
+    return () => {
+      authListener?.subscription?.unsubscribe();
+    };
   }, []);
 
   // Close sidebar on Escape key if open and not pinned
@@ -201,6 +301,7 @@ export default function App() {
   // Dynamically create a case from an analyzed email sample
   const handleCreateCaseFromSample = (sample) => {
     const newCaseId = `CASE-${Math.floor(1000 + Math.random() * 9000)}`;
+    const authorName = currentUser?.name || 'Lead Analyst';
     const newCase = {
       id: newCaseId,
       title: sample.subject || 'Executive Wire Threat Investigation',
@@ -211,7 +312,7 @@ export default function App() {
       threatActor: sample.correlation?.threatActor || 'Unknown BEC Threat Cluster',
       summary: sample.plainEnglishSummary || 'Suspicious inbound email intercepted by security sentinel.',
       origin: sample.geo ? `${sample.geo.city}, ${sample.geo.country}` : 'Global Network',
-      assignedTo: `${currentUser.name} (Lead Analyst)`,
+      assignedTo: `${authorName} (Lead Analyst)`,
       linkedEmailsCount: 1,
       sampleId: sample.id,
       indicators: [
@@ -222,13 +323,21 @@ export default function App() {
       timeline: [
         {
           time: 'Just now',
-          author: `${currentUser.name} (SOC Analyst)`,
+          author: `${authorName} (SOC Analyst)`,
           text: `Opened incident case from analyzed email "${sample.subject}". Threat score: ${sample.riskScore}/100.`,
         },
       ],
     };
 
-    setCases((prev) => [newCase, ...prev]);
+    setCases((prev) => {
+      const updated = [newCase, ...prev];
+      if (currentUser?.id) {
+        try {
+          localStorage.setItem(`tracemail_cases_${currentUser.id}`, JSON.stringify(updated));
+        } catch (_) {}
+      }
+      return updated;
+    });
     showToast(`Case ${newCaseId} successfully opened in Case Queue (New / Triage)!`);
     setCurrentScreen('cases');
     if (!isSidebarPinned) setIsSidebarOpen(false);
@@ -236,8 +345,7 @@ export default function App() {
 
   // Auth success callback
   const handleAuthSuccess = (user) => {
-    setCurrentUser(user);
-    if (user.role) setCurrentRole(user.role);
+    loadUserData(user);
 
     if (user.isFirstTime) {
       // First-time users go to Onboarding
@@ -291,6 +399,8 @@ export default function App() {
         unreadAlertsCount={unreadAlerts}
         onOpenSubmit={() => handleNavigate('submit')}
         onOpenLogout={() => setIsLogoutOpen(true)}
+        onOpenLogin={() => { setAuthMode('login'); setIsAuthOpen(true); }}
+        onOpenSignUp={() => { setAuthMode('signup'); setIsAuthOpen(true); }}
         isSidebarOpen={isSidebarOpen}
         onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
         currentUser={currentUser}
@@ -360,7 +470,7 @@ export default function App() {
             <DashboardScreen
               currentRole={currentRole}
               currentUser={currentUser}
-              isFirstTime={currentUser.isFirstTime}
+              isFirstTime={currentUser?.isFirstTime || false}
               cases={cases}
               alerts={alerts}
               onOpenSubmit={() => handleNavigate('submit')}
@@ -450,11 +560,21 @@ export default function App() {
       <LogoutModal
         isOpen={isLogoutOpen}
         onClose={() => setIsLogoutOpen(false)}
-        onConfirmLogout={() => {
+        onConfirmLogout={async () => {
+          try {
+            await signOutUser();
+          } catch (err) {
+            console.warn('Logout error:', err);
+          }
+          try { localStorage.removeItem('tracemail_active_user'); } catch (_) {}
           setCurrentRole('analyst');
-          setCurrentUser((prev) => ({ ...prev, isFirstTime: false }));
+          setCurrentUser(null);
+          setCases([]);
+          setAlerts([]);
+          setUnreadAlerts(0);
+          setIsLogoutOpen(false);
           handleNavigate('landing');
-          showToast('You have been securely logged out.');
+          showToast('Logged out successfully.');
         }}
       />
     </div>
