@@ -325,42 +325,37 @@ export default function LandingScreen({
                 if (vid) vid.style.transform = `translate(0px, 0px) scale(1)`;
               }}
             >
-              {/* Outer Warm Gold Glowing Aura */}
-              <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-amber-500/20 via-yellow-400/10 to-transparent blur-[90px] pointer-events-none -z-10 animate-pulse-glow" />
-
-              {/* Animated outer rings - Glowing Yellowish Gold */}
-              <div className="absolute inset-1 rounded-full border-2 border-amber-400/40 shadow-[0_0_35px_rgba(251,191,36,0.4)] animate-[spin_50s_linear_infinite] pointer-events-none" />
-              <div className="absolute inset-6 rounded-full border border-yellow-300/30 shadow-[0_0_25px_rgba(234,179,8,0.3)] animate-[spin_35s_linear_infinite_reverse] pointer-events-none" />
-              <div className="absolute inset-12 rounded-full border border-amber-500/20 shadow-[0_0_15px_rgba(245,158,11,0.2)] animate-[spin_25s_linear_infinite] pointer-events-none" />
+              {/* Animated outer rings - Glow reduced */}
+              <div className="absolute inset-2 rounded-full border border-cyan-500/10 shadow-[0_0_30px_rgba(6,182,212,0.05)] animate-[spin_60s_linear_infinite] pointer-events-none" />
+              <div className="absolute inset-8 rounded-full border border-blue-500/5 animate-[spin_40s_linear_infinite_reverse] pointer-events-none" />
               
-              {/* The Globe Core Container with HD Yellowish Glowing Border */}
-              <div className="relative w-[85%] h-[85%] rounded-full overflow-hidden shadow-[0_0_50px_rgba(251,191,36,0.5),inset_0_0_30px_rgba(251,191,36,0.25)] border-2 border-amber-400/70 flex items-center justify-center bg-[#030914]">
+              {/* The Globe Core */}
+              <div className="relative w-[85%] h-[85%] rounded-full overflow-hidden shadow-[0_0_40px_rgba(43,82,255,0.15)] border border-white/5 flex items-center justify-center">
                 <video
                   autoPlay
                   loop
                   muted
                   playsInline
-                  className="absolute w-[180%] h-[180%] max-w-none object-cover opacity-100 mix-blend-screen pointer-events-none"
+                  className="absolute w-[180%] h-[180%] max-w-none object-cover opacity-90 mix-blend-screen pointer-events-none"
                   style={{ 
-                    filter: 'contrast(1.55) brightness(1.35) saturate(1.35) drop-shadow(0 0 12px rgba(251,191,36,0.4))',
+                    filter: 'contrast(1.2) brightness(1.1) hue-rotate(-10deg)',
                     transition: 'transform 0.2s ease-out'
                   }}
                 >
                   <source src="/bg_video.mp4" type="video/mp4" />
                 </video>
                 
-                {/* High Definition Edge Vignette Overlay */}
-                <div className="absolute inset-0 rounded-full shadow-[inset_0_0_50px_rgba(0,0,0,0.85),inset_0_0_25px_rgba(251,191,36,0.35)] pointer-events-none" />
-                <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-amber-500/10 via-transparent to-yellow-300/20 pointer-events-none" />
+                {/* Inner shadow */}
+                <div className="absolute inset-0 rounded-full shadow-[inset_-30px_-30px_70px_rgba(0,0,0,0.9),inset_30px_30px_70px_rgba(255,255,255,0.1)] pointer-events-none mix-blend-multiply" />
+                <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-transparent via-white/5 to-white/10 pointer-events-none" />
               </div>
 
-              {/* Floating Yellowish / Amber Telemetry Accents */}
-              <div className="absolute top-[12%] right-[12%] w-3 h-3 rounded-full bg-amber-400 shadow-[0_0_15px_rgba(251,191,36,0.9)] animate-ping pointer-events-none" />
-              <div className="absolute bottom-[20%] left-[12%] w-2.5 h-2.5 rounded-full bg-yellow-300 shadow-[0_0_12px_rgba(234,179,8,0.9)] animate-pulse pointer-events-none" />
-              <div className="absolute top-[40%] left-[8%] w-2 h-2 rounded-full bg-amber-300 shadow-[0_0_10px_rgba(245,158,11,0.8)] animate-pulse pointer-events-none" />
-
-              {/* Center warm gold glow behind */}
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] h-[80%] bg-amber-500/15 blur-[90px] rounded-full pointer-events-none -z-10" />
+              {/* Floating tech accents */}
+              <div className="absolute top-[15%] right-[10%] w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_10px_rgba(34,211,238,0.5)] animate-ping pointer-events-none" />
+              <div className="absolute bottom-[25%] left-[15%] w-1.5 h-1.5 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)] animate-pulse pointer-events-none" />
+              
+              {/* Center glow behind - reduced */}
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[70%] h-[70%] bg-blue-500/10 blur-[80px] rounded-full pointer-events-none -z-10" />
             </div>
           </div>
 
