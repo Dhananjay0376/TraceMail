@@ -9,8 +9,10 @@ export default {
     extend: {
       fontFamily: {
         sans: ['Plus Jakarta Sans', 'Inter', 'sans-serif'],
-        serif: ['IBM Plex Serif', 'serif'],
+        serif: ['Besley', 'IBM Plex Serif', 'serif'],
         mono: ['Space Mono', 'JetBrains Mono', 'monospace'],
+        league: ['"League Gothic"', 'sans-serif'],
+        besley: ['Besley', 'serif'],
       },
       colors: {
         redrob: {

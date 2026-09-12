@@ -296,9 +296,11 @@ export default function LandingScreen({
               </span>
             </div>
 
-            <h1 className="text-4xl sm:text-6xl lg:text-7xl font-extrabold text-white leading-[1.08] tracking-tight mb-2 font-sans">
-              <span className="block drop-shadow-sm">{slide.headline}</span>
-              <span className={`block font-extrabold tracking-tight mt-2 text-3xl sm:text-5xl lg:text-6xl bg-gradient-to-r ${slide.subGradient || 'from-cyan-400 to-blue-400'} bg-clip-text text-transparent`}>
+            <h1 className="mb-2">
+              <span className="block font-league uppercase tracking-wider text-5xl sm:text-7xl lg:text-8xl text-white font-normal leading-none drop-shadow-md">
+                {slide.headline}
+              </span>
+              <span className={`block font-besley font-medium text-2xl sm:text-4xl lg:text-5xl mt-3 leading-tight bg-gradient-to-r ${slide.subGradient || 'from-cyan-400 to-blue-400'} bg-clip-text text-transparent`}>
                 {slide.sub}
               </span>
             </h1>

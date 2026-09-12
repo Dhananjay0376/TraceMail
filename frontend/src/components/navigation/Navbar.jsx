@@ -6,6 +6,7 @@ import {
   LogOut,
   ChevronDown,
   ExternalLink,
+  Menu,
 } from 'lucide-react';
 import CardNav from './CardNav';
 
@@ -242,6 +243,21 @@ export default function Navbar({
 
   const headerRightActions = (
     <div className="flex items-center gap-2 sm:gap-3 z-50">
+      {onToggleSidebar && (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleSidebar();
+          }}
+          className="p-1.5 sm:p-2 rounded-xl bg-white/5 hover:bg-white/15 border border-white/10 text-slate-300 hover:text-white transition-all cursor-pointer flex items-center gap-1.5 text-xs font-mono"
+          title="Toggle Main Navigation Drawer"
+          aria-label="Toggle Main Navigation Drawer"
+        >
+          <Menu className="w-4 h-4 text-redrob-aqua" />
+          <span className="hidden md:inline font-bold">Menu</span>
+        </button>
+      )}
       <button
         type="button"
         onClick={(e) => {
@@ -279,13 +295,23 @@ export default function Navbar({
       }}
     >
       <div className="w-full px-4 sm:px-6 lg:px-8 py-2">
-        {/* Full-width CardNav rectangle line containing Logo, Login, Sign Up, and Profile button */}
+        {/* Full-width CardNav rectangle line containing Logo, Login, Sign Up, Profile button, and Get Started */}
         <CardNav
           logo={brandLogo}
           logoAlt="TraceMail Logo"
           items={cardNavItems}
           baseColor="#0b1026"
           menuColor="#ffffff"
+          ctaText="Get Started"
+          onCtaClick={() => {
+            if (currentUser) {
+              onNavigate('submit');
+            } else if (onOpenSignUp) {
+              onOpenSignUp();
+            } else {
+              onNavigate('onboarding');
+            }
+          }}
           rightContent={headerRightActions}
         />
       </div>
