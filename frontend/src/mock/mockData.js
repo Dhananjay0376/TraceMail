@@ -1,6 +1,17 @@
 // Comprehensive Mock Store for TraceMail Cybersecurity Intelligence Platform
 // TODO: connect to backend API for live ingestion, threat intelligence feeds, and cases
 
+// Used by the no-credentials demo flow in AuthModal.
+export const DEMO_USER = {
+  id: 'demo-shri',
+  name: 'Shri',
+  email: 'shri.analyst@apexdefense.com',
+  org: 'Apex Defense',
+  role: 'analyst',
+  isFirstTime: false,
+  isDemo: true,
+};
+
 export const MOCK_STATS = {
   totalScanned: 14892,
   scannedGrowth: "+12.4% this week",

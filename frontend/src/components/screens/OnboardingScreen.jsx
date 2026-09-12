@@ -459,13 +459,23 @@ export default function OnboardingScreen({ onCompleteOnboarding, onSkip, current
             </div>
 
             <div className="flex items-center justify-between pt-6 border-t border-white/10">
-              <button
-                type="button"
-                onClick={handleSkipAll}
-                className="text-xs text-slate-400 hover:text-white underline cursor-pointer"
-              >
-                Skip, I'll do this later
-              </button>
+              <div className="flex items-center gap-4">
+                <button
+                  type="button"
+                  onClick={() => setStep(2)}
+                  className="px-4 py-2.5 rounded-xl border border-white/10 text-slate-300 hover:text-white text-xs flex items-center gap-1.5 transition-colors"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  <span>Back</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSkipAll}
+                  className="text-xs text-slate-400 hover:text-white underline cursor-pointer"
+                >
+                  Skip, I'll do this later
+                </button>
+              </div>
 
               <button
                 type="button"

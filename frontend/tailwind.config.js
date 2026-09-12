@@ -14,10 +14,10 @@ export default {
       },
       colors: {
         redrob: {
-          canvas: '#050814',
-          surface: '#090d1f',
-          card: '#0b1026',
-          cardHover: '#0f1738',
+          canvas: '#061B2E',
+          surface: '#08243A',
+          card: '#0B2D46',
+          cardHover: '#103A59',
           blue: '#2b52ff',
           blueHover: '#1d3fe8',
           blueLight: '#e5efff',

@@ -370,7 +370,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#050814] text-slate-100 flex flex-col font-sans relative overflow-x-hidden">
+    <div className="min-h-screen bg-[#061B2E] text-slate-100 flex flex-col font-sans relative overflow-x-hidden">
       {/* Redrob Ambient Lighting Aura & Tech Grid */}
       <AmbientAura />
 

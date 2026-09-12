@@ -20,6 +20,7 @@ import {
 import StatCard from '../common/StatCard';
 import RiskBadge from '../common/RiskBadge';
 import MiniWorldMap from '../map/MiniWorldMap';
+import MagicBento from '../vfx/MagicBento';
 import { MOCK_STATS, MOCK_ALERTS } from '../../mock/mockData';
 
 export default function DashboardScreen({
@@ -249,7 +250,18 @@ export default function DashboardScreen({
       ) : (
         <>
           {/* 4 Core Summary Stat Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 font-mono">
+          <MagicBento
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 font-mono"
+            enableStars
+            enableSpotlight
+            enableBorderGlow
+            enableTilt
+            enableMagnetism
+            clickEffect
+            particleCount={7}
+            spotlightRadius={260}
+            glowColor="0, 227, 216"
+          >
             <StatCard
               title="Total Scanned"
               value={MOCK_STATS.totalScanned.toLocaleString()}
@@ -282,7 +294,7 @@ export default function DashboardScreen({
               icon={Clock}
               color="lime"
             />
-          </div>
+          </MagicBento>
 
           {/* Main Grid: Recent Alerts Table & Mini World Map Widget */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
