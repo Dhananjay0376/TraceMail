@@ -349,13 +349,15 @@ export default function Sidebar({
                 </span>
               </div>
             </div>
-            <button
-              onClick={onOpenLogout}
-              title="Log Out Session"
-              className="p-1.5 rounded-lg hover:bg-redrob-coral/20 hover:text-redrob-coral text-slate-400 transition-all cursor-pointer"
-            >
-              <LogOut className="w-3.5 h-3.5" />
-            </button>
+            {currentUser && (
+              <button
+                onClick={onOpenLogout}
+                title="Log Out Session"
+                className="p-1.5 rounded-lg hover:bg-redrob-coral/20 hover:text-redrob-coral text-slate-400 transition-all cursor-pointer"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+              </button>
+            )}
           </div>
         </div>
       </aside>

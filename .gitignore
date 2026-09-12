@@ -11,32 +11,48 @@ plugins/
 # Python & Virtual Environments
 __pycache__/
 *.py[cod]
+*$py.class
 *.class
 .venv/
 venv/
 env/
 *.env
 !.env.example
+*.log
+
+# Caches & temporary files
+.pytest_cache/
+.coverage
+htmlcov/
+*.sqlite3
+d:\tmp/
+tmp/
+
+# Data & Models
+data/raw/*
+!data/raw/.gitkeep
+data/cache/*
+!data/cache/.gitkeep
+model/*.bin
+model/*.pt
+model/*.safetensors
+model/distilbert/*
+!model/distilbert/.gitkeep
+Model/*.pkl
+results/
 
 # Node / Frontend
 frontend/node_modules/
 frontend/dist/
 frontend/.env
+frontend/.env.local
 *.local
-
-# Datasets & Large Models (Keep only sample .eml files in git)
-data/raw/*
-!data/raw/.gitkeep
-model/*.bin
-model/*.pt
-model/*.safetensors
-results/
 
 # OS / IDE Artifacts
 .DS_Store
 Thumbs.db
 .vscode/
 .idea/
-*.log
+*.swp
 *.db
-*.sqlite3
+

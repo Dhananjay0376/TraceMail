@@ -519,3 +519,15 @@ export const MOCK_GLOSSARY = [
     plainEnglish: "A large network identifier controlled by internet service providers, cloud datacenters, or telecom operators. Cyber attackers often purchase bulletproof VPS hosting in foreign ASNs that ignore legal copyright or crime takedown requests."
   }
 ];
+
+export const DEMO_USER = {
+  id: "demo-user-001",
+  email: "shri@tracemail.security",
+  name: "Shri",
+  org: "TraceMail Cyber Defense Unit",
+  role: "analyst",
+  avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+  isFirstTime: false,
+  isDemo: true,
+};
+

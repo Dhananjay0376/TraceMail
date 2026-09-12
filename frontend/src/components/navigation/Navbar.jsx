@@ -24,6 +24,8 @@ export default function Navbar({
   isSidebarOpen,
   onToggleSidebar,
   currentUser,
+  onOpenLogin,
+  onOpenSignUp,
 }) {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
